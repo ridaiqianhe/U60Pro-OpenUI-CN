@@ -94,20 +94,31 @@ function ChargeControlCard() {
         {failure && <InlineStatus kind="error">更改未应用： {failure}</InlineStatus>}
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <p className="text-body font-medium text-ink">充电中</p>
+            <p className="text-body font-medium text-ink">电池状态</p>
             <p className="truncate text-meta text-ink2">
-              {cc.battery_status ?? 'Battery data unavailable'}{cc.capacity != null ? ` at ${cc.capacity}%` : ''}{cc.manual_override ? ' · manual override' : ''}
+              {cc.battery_status ?? '暂无电池数据'}{cc.capacity != null ? ` · ${cc.capacity}%` : ''}
             </p>
           </div>
-          <Button
-            size="sm"
-            variant={cc.charging_stopped ? 'primary' : 'outline'}
-            loading={busy}
-            disabled={!cc.charger_available || cc.charging_stopped == null}
-            onClick={() => apply({ charging_stopped: !cc.charging_stopped })}
-          >
-            {cc.charging_stopped ? 'Resume charging' : 'Stop charging'}
-          </Button>
+          <span className="text-meta text-ink2">
+            {cc.charging_stopped == null ? '状态未知' : cc.charging_stopped ? '已暂停充电' : '允许充电'}
+          </span>
+        </div>
+
+        <div className="flex items-center justify-between gap-3 border-t border-line/8 pt-3">
+          <div className="min-w-0">
+            <p id="direct-power-mode" className="text-body font-medium text-ink">直流供电模式</p>
+            <p id="direct-power-help" className="mt-0.5 text-meta text-ink2">
+              对应原厂直流供电开关，开启后暂停电池充电。
+              {cc.charging_stopped && !cc.manual_override && cc.charge_limit_enabled ? '当前由充电上限触发。' : ''}
+              {cc.charging_stopped && cc.manual_override ? '当前为手动开启。' : ''}
+            </p>
+          </div>
+          <Toggle
+            checked={cc.charging_stopped === true}
+            disabled={busy || status !== 'ready' || !cc.charger_available || cc.charging_stopped == null}
+            onChange={(enabled) => apply({ charging_stopped: enabled })}
+            labelledBy="direct-power-mode"
+          />
         </div>
 
         <div className="border-t border-line/8 pt-3">
@@ -115,7 +126,7 @@ function ChargeControlCard() {
             <div>
               <p id="charge-limit-enforcer" className="text-body font-medium text-ink">充电上限</p>
               <p className="text-meta text-ink2">
-                达到上限停止，恢复阈值 {cc.hysteresis}% below
+                达到上限暂停，电量下降 {cc.hysteresis}% 后恢复
               </p>
             </div>
             <Toggle
