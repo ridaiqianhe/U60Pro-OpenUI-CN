@@ -1,5 +1,5 @@
 import { lazy, useEffect, useState } from 'react'
-import { AUTH_EXPIRED_EVENT, clearToken, hasToken } from './data/client'
+import { AUTH_EXPIRED_EVENT, clearToken, hasToken, req, setToken } from './data/client'
 import { clearPollCache } from './data/poll'
 import { HomeProvider } from './app/HomeContext'
 import Login from './app/Login'
@@ -17,6 +17,8 @@ const ClashPage = lazy(() => import('./features/clash/ClashPage'))
 
 export default function App() {
   const [authed, setAuthed] = useState(hasToken())
+  const [autoLoginAllowed, setAutoLoginAllowed] = useState(true)
+  const [checking, setChecking] = useState(!hasToken())
   const [group, setGroup] = useState<Group>('home')
   const { theme, toggle } = useTheme()
 
@@ -28,6 +30,25 @@ export default function App() {
     window.addEventListener(AUTH_EXPIRED_EVENT, onAuthExpired)
     return () => window.removeEventListener(AUTH_EXPIRED_EVENT, onAuthExpired)
   }, [])
+
+  useEffect(() => {
+    if (authed || !autoLoginAllowed) return
+    let active = true
+    void req('POST', '/cgi-bin/wg-login', {}, undefined, 6000, window.location.origin, false)
+      .then(result => {
+        if (active && typeof result.token === 'string') {
+          setToken(result.token)
+          setAuthed(true)
+        }
+      })
+      .catch(() => { /* Other source networks keep the normal password login. */ })
+      .finally(() => { if (active) setChecking(false) })
+    return () => { active = false }
+  }, [authed, autoLoginAllowed])
+
+  if (!authed && checking && autoLoginAllowed) {
+    return <div role="status" className="flex min-h-full items-center justify-center p-6 text-body text-ink2">正在检查登录状态…</div>
+  }
 
   if (!authed) {
     return (
@@ -50,6 +71,8 @@ export default function App() {
           {group === 'system' && (
             <SystemGroup
               onLogout={() => {
+                setAutoLoginAllowed(false)
+                setChecking(false)
                 clearToken()
                 clearPollCache()
                 setAuthed(false)

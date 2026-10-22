@@ -51,3 +51,5 @@ subscription.url
 config.json
 state.json
 profile.conf
+
+credentials.json

@@ -48,3 +48,15 @@ python3 scripts/test-sms-multi-device.py --ssh 'ssh my-device'
 
 测试会在设备临时创建 `/data/plugins/sms-multi-test`，使用反向 SSH 转发端口 18887；
 测试结束删除自身目录，不读取真实短信或向真实 Webhook 发送。
+
+## 可选 WG 自动登录
+
+`wg-login.cgi` 与 `trusted-login/main.lua` 提供 10.13.13.0/24 来源白名单登录。
+这是可选的管理权限授予，只有信任整个 WG 子网时才部署。脚本仅信任 TCP 来源
+REMOTE_ADDR，不使用转发 IP 请求头；要求同源 JSON POST，无跨域放行。
+面板经设备数字 IP 访问时支持自动登录，其他来源仍使用密码。
+
+Lua 放 `/data/plugins/trusted-login/main.lua`，CGI 放 `cgi-bin/wg-login`（755）。
+由管理员在该私有目录内创建 `credentials.json`，JSON 中仅保存 `password` 字段，
+值为自行设置的 agent 密码；目录 700、凭据 600。密码改变后需要同步更新此文件。
+未部署该模块或校验失败时，前端回到普通登录。凭据永远不要提交到仓库。
