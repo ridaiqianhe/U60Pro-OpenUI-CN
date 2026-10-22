@@ -52,7 +52,7 @@ export function Tabs<T extends string>({
 
   function onKeyDown(e: KeyboardEvent<HTMLDivElement>) {
     if (e.altKey || e.ctrlKey || e.metaKey) return
-    if (!['ArrowLeft', 'ArrowRight', "首页", 'End'].includes(e.key)) return
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return
     const i = tabs.findIndex((t) => t.id === stopId)
     const next = rovingTarget(e.key, Math.max(i, 0), tabs.length)
     if (next == null) return

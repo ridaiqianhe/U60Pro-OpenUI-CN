@@ -4,11 +4,11 @@ import type { MockAgent } from './harness'
 export type Group = 'home' | 'signal' | 'network' | 'modem' | 'system'
 
 export const GROUP_LABEL: Record<Group, string> = {
-  home: 'Home',
-  signal: 'Signal',
-  network: 'Network',
-  modem: 'Modem',
-  system: 'System',
+  home: '首页',
+  signal: '信号',
+  network: '网络',
+  modem: '移动网络',
+  system: '系统',
 }
 
 /** Viewport presets. `desktop` is above the `lg` (1024px) breakpoint where the sidebar replaces the bottom tabs. */
@@ -25,7 +25,7 @@ export const CLOCK_START = new Date('2026-10-05T12:00:00.000Z')
 
 export interface OpenAppOptions {
   group?: Group
-  /** Visible tab label inside the group, e.g. 'Mode & Locking'. */
+  /** Visible tab label inside the group, e.g. '模式与锁定'. */
   tab?: string
   /** Persisted via localStorage `u60.theme` before the app boots (and mirrored in prefers-color-scheme). Default 'light'. */
   theme?: 'light' | 'dark'
@@ -133,8 +133,6 @@ export async function openApp(page: Page, opts: OpenAppOptions = {}): Promise<vo
   await groupButton.waitFor({ state: 'visible' })
   if (group !== 'home') await groupButton.click()
   if (opts.tab) {
-    const exact = page.getByRole('tab', { name: opts.tab, exact: true })
-    const tab = (await exact.count()) > 0 ? exact : page.getByRole('tab', { name: opts.tab })
-    await tab.click()
+    await page.getByRole('tab', { name: opts.tab, exact: true }).click()
   }
 }

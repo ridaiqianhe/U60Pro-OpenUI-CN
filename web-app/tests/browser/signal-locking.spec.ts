@@ -22,7 +22,7 @@ const pressedBands = async (page: Page, group: 'NR bands' | 'LTE bands') => {
 }
 
 async function openLocking(page: Page, opts: { clock?: boolean } = {}) {
-  await openApp(page, { group: 'signal', tab: 'Mode & Locking', clock: opts.clock })
+  await openApp(page, { group: 'signal', tab: '模式与锁定', clock: opts.clock })
   await expect(page.getByRole('group', { name: 'NR bands' })).toBeVisible()
   if (opts.clock) await freezeClock(page)
 }
@@ -64,9 +64,9 @@ test.describe('band lock drafts', () => {
     await advanceHeartbeat(page, agent)
     await expect(page.getByText(/changed to “n3, n5” while you were editing/)).toBeVisible()
     expect(await pressedBands(page, 'NR bands')).toEqual([1, 41, 78])
-    await expect(page.getByText('Current lock:').filter({ hasText: 'n3, n5' })).toBeVisible()
+    await expect(page.getByText('当前锁定：').filter({ hasText: 'n3, n5' })).toBeVisible()
 
-    await page.locator('section', { has: page.getByRole('heading', { name: 'NR 5G band lock' }) }).getByRole('button', { name: 'Cancel' }).click()
+    await page.locator('section', { has: page.getByRole('heading', { name: '5G NR 频段锁定' }) }).getByRole('button', { name: '取消' }).click()
     expect(await pressedBands(page, 'NR bands')).toEqual([3, 5])
     await expect(page.getByText(/while you were editing/)).toHaveCount(0)
     expect(agent.mutations()).toEqual([])
@@ -113,14 +113,14 @@ test.describe('band lock drafts', () => {
     const visible = await pressedBands(page, 'NR bands')
     expect(visible).toEqual([1, 41])
 
-    const apply = page.getByRole('button', { name: 'Lock 2 bands' }).first()
+    const apply = page.getByRole('button', { name: '锁定 2 bands' }).first()
     await apply.click()
     const dialog = page.getByRole('dialog', { name: 'Lock NR bands?' })
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText('n1, n41')
     await expect(dialog).toContainText('Internet')
     await expect(dialog).toContainText('Reset bands to automatic')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     await expect(dialog).toBeHidden()
     expect(agent.mutations()).toEqual([])
     expect(await pressedBands(page, 'NR bands')).toEqual([1, 41]) // the draft survives Cancel
@@ -132,8 +132,8 @@ test.describe('band lock drafts', () => {
     expect(`${m.method} ${m.path}`).toBe('POST /api/cell/band/nr')
     expect(m.body).toEqual({ nr5g_type: 'SA', nr5g_band: visible.join(',') })
     // Fresh read-back re-baselines: the device now reports the lock, the draft is not dirty.
-    await expect(page.getByText('Current lock:').filter({ hasText: 'n1, n41' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Lock 2 bands' }).first()).toBeDisabled()
+    await expect(page.getByText('当前锁定：').filter({ hasText: 'n1, n41' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '锁定 2 bands' }).first()).toBeDisabled()
     expect(agent.mutations()).toHaveLength(1)
   })
 
@@ -145,7 +145,7 @@ test.describe('band lock drafts', () => {
     const visible = await pressedBands(page, 'LTE bands')
     expect(visible).toEqual([3, 7, 8])
 
-    await page.getByRole('button', { name: 'Lock 3 bands' }).click()
+    await page.getByRole('button', { name: '锁定 3 bands' }).click()
     const dialog = page.getByRole('dialog', { name: 'Lock LTE bands?' })
     await expect(dialog).toContainText('B3, B7, B8')
     await dialog.getByRole('button', { name: 'Apply lock' }).click()
@@ -162,23 +162,23 @@ test.describe('band lock drafts', () => {
     agent.fail('POST', '/api/cell/band/nr', { status: 500, error: 'synthetic apply failure' })
     await openLocking(page)
     await page.getByRole('group', { name: 'NR bands' }).getByRole('button', { name: 'n1', exact: true }).click()
-    await page.getByRole('button', { name: 'Lock 3 bands' }).click()
+    await page.getByRole('button', { name: '锁定 3 bands' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Apply lock' }).click()
     await expect(page.getByText('synthetic apply failure')).toBeVisible()
     expect(agent.mutations()).toHaveLength(1)
     expect(await pressedBands(page, 'NR bands')).toEqual([1, 41, 78])
-    await expect(page.getByRole('button', { name: 'Lock 3 bands' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: '锁定 3 bands' })).toBeEnabled()
   })
 
   test('Reset bands asks first: Cancel sends nothing, Confirm sends one reset', async ({ page, agent }) => {
     agent.on('POST', '/api/cell/band/reset', { data: {} })
     await openLocking(page)
-    await page.getByRole('button', { name: 'Reset bands to automatic' }).click()
+    await page.getByRole('button', { name: '恢复自动频段' }).click()
     const dialog = page.getByRole('dialog', { name: 'Reset band locks to automatic?' })
     await expect(dialog).toContainText('LTE and NR (5G SA) band locks')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
-    await page.getByRole('button', { name: 'Reset bands to automatic' }).click()
+    await page.getByRole('button', { name: '恢复自动频段' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Reset bands' }).click()
     await expect.poll(() => agent.mutations().length).toBe(1)
     expect(agent.mutations()[0].path).toBe('/api/cell/band/reset')
@@ -189,9 +189,9 @@ test.describe('network mode', () => {
   test('arrow keys change the draft only; nothing is sent until Apply and Confirm', async ({ page, agent }) => {
     agent.on('PUT', '/api/modem/network-mode', { data: {} })
     await openLocking(page)
-    const group = page.getByRole('radiogroup', { name: 'Network mode' })
+    const group = page.getByRole('radiogroup', { name: '网络模式' })
     await expect(group.getByRole('radio', { name: '5G SA' })).toBeChecked()
-    const apply = page.getByRole('button', { name: 'Apply', exact: true })
+    const apply = page.getByRole('button', { name: '应用', exact: true })
     await expect(apply).toBeDisabled()
 
     await group.getByRole('radio', { name: '5G SA' }).focus()
@@ -208,7 +208,7 @@ test.describe('network mode', () => {
     const dialog = page.getByRole('dialog', { name: 'Change network mode?' })
     await expect(dialog).toContainText('4G only')
     await expect(dialog).toContainText('Internet')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
 
     await apply.click()
@@ -223,16 +223,16 @@ test.describe('network mode', () => {
 test.describe('capabilities (R07)', () => {
   test('a failed read shows Retry with controls unavailable, and recovers in place', async ({ page, agent }) => {
     agent.fail('GET', '/api/modem/capabilities', { times: 1, status: 503, error: 'synthetic capability outage' })
-    await openApp(page, { group: 'signal', tab: 'Mode & Locking' })
+    await openApp(page, { group: 'signal', tab: '模式与锁定' })
     const alert = page.getByRole('alert').filter({ hasText: 'synthetic capability outage' })
     await expect(alert).toBeVisible()
-    await expect(page.getByRole('radiogroup', { name: 'Network mode' })).toHaveCount(0)
+    await expect(page.getByRole('radiogroup', { name: '网络模式' })).toHaveCount(0)
     await expect(page.getByRole('group', { name: 'NR bands' })).toHaveCount(0)
     expect(agent.requests({ method: 'GET', path: '/api/modem/capabilities' })).toHaveLength(1)
 
-    await alert.getByRole('button', { name: 'Retry' }).click()
+    await alert.getByRole('button', { name: '重试' }).click()
     await expect(page.getByRole('group', { name: 'NR bands' })).toBeVisible()
-    await expect(page.getByRole('radiogroup', { name: 'Network mode' })).toBeVisible()
+    await expect(page.getByRole('radiogroup', { name: '网络模式' })).toBeVisible()
     await expect(alert).toHaveCount(0)
     expect(agent.requests({ method: 'GET', path: '/api/modem/capabilities' })).toHaveLength(2)
   })
@@ -242,7 +242,7 @@ test.describe('capabilities (R07)', () => {
     agent.on('GET', '/api/dashboard', {
       data: fx.dashboard({ network: 'SA', signal: { nr5g_sa_band_lock: '0', lte_band_lock: '0' } }),
     })
-    await openApp(page, { group: 'signal', tab: 'Mode & Locking' })
+    await openApp(page, { group: 'signal', tab: '模式与锁定' })
     await expect(page.getByText(/did not report any supported NR bands/)).toBeVisible()
     await expect(page.getByRole('group', { name: 'NR bands' })).toHaveCount(0)
   })
@@ -255,7 +255,7 @@ test.describe('serving cells', () => {
     agent.on('POST', '/api/cell/lock/lte', { data: {} })
     await openLocking(page)
 
-    const list = page.getByRole('list', { name: 'Serving cells' })
+    const list = page.getByRole('list', { name: '服务小区' })
     await expect(list).toBeVisible()
     const rows = list.getByRole('listitem')
     const count = await rows.count()
@@ -286,7 +286,7 @@ test.describe('serving cells', () => {
     const dialog = page.getByRole('dialog', { name: 'Lock to this cell?' })
     await expect(dialog).toContainText('312')
     await expect(dialog).toContainText('3650')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
 
     await lockButton.click()
@@ -304,18 +304,18 @@ test.describe('serving cells', () => {
     const card = page.locator('section', { has: page.getByRole('heading', { name: 'NR cell lock' }) })
     await card.getByLabel('PCI').fill('745')
     await card.getByLabel('NR-ARFCN').fill('643392')
-    await card.getByLabel('Band').fill('78')
-    await card.getByRole('button', { name: 'Lock', exact: true }).click()
+    await card.getByLabel('频段').fill('78')
+    await card.getByRole('button', { name: '锁定', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Lock to this cell?' })
     await expect(dialog).toContainText('n78')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
-    await card.getByRole('button', { name: 'Lock', exact: true }).click()
+    await card.getByRole('button', { name: '锁定', exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Lock cell' }).click()
     await expect.poll(() => agent.mutations().length).toBe(1)
     expect(agent.mutations()[0].body).toEqual({ lock_nr_pci: '745', lock_nr_earfcn: '643392', lock_nr_cell_band: '78' })
 
-    await page.getByRole('button', { name: 'Reset cell locks' }).click()
+    await page.getByRole('button', { name: '解除小区锁定' }).click()
     await page.getByRole('dialog', { name: 'Reset cell locks to automatic?' }).getByRole('button', { name: 'Reset cells' }).click()
     await expect.poll(() => agent.mutations().length).toBe(2)
     expect(agent.mutations()[1].path).toBe('/api/cell/lock/reset')

@@ -9,8 +9,8 @@ const PATH = '/api/device/charge-control'
 const enabled = fx.chargeControl({ charge_limit_enabled: true, charge_limit: 90 })
 
 async function openMetrics(page: Page) {
-  await openApp(page, { group: 'system', tab: 'Metrics', clock: true })
-  const range = page.getByLabel('Stop charging at')
+  await openApp(page, { group: 'system', tab: '指标', clock: true })
+  const range = page.getByLabel('停止充电阈值')
   await expect(range).toHaveValue('90')
   await freezeClock(page)
   return range
@@ -47,7 +47,7 @@ test('keyboard edits survive polls and Apply sends the draft once', async ({ pag
   await expect(range).toHaveValue('80')
 
   agent.on('PUT', PATH, (req) => ({ data: { ...enabled, ...(req.body as object) } }))
-  const apply = page.getByRole('button', { name: 'Apply limit' })
+  const apply = page.getByRole('button', { name: '应用上限' })
   await apply.click()
   await expect(range).toHaveValue('80')
   await expect(apply).toBeHidden()
@@ -60,12 +60,12 @@ test('Cancel discards the draft without a request; same value offers no Apply', 
   const range = await openMetrics(page)
   await range.focus()
   await range.press('ArrowRight')
-  await page.getByRole('button', { name: 'Cancel' }).click()
+  await page.getByRole('button', { name: '取消' }).click()
   await expect(range).toHaveValue('90')
 
   await range.press('ArrowLeft')
   await range.press('ArrowRight')
-  await expect(page.getByRole('button', { name: 'Apply limit' })).toBeDisabled()
+  await expect(page.getByRole('button', { name: '应用上限' })).toBeDisabled()
   expect(agent.mutations()).toEqual([])
 })
 
@@ -74,8 +74,8 @@ test('a rejected save keeps the draft and explains the failure', async ({ page, 
   await range.focus()
   await range.press('ArrowLeft')
   agent.on('PUT', PATH, { error: 'charger busy', status: 503 })
-  await page.getByRole('button', { name: 'Apply limit' }).click()
-  await expect(page.getByText('Change not applied: charger busy')).toBeVisible()
+  await page.getByRole('button', { name: '应用上限' }).click()
+  await expect(page.getByText('更改未应用： charger busy')).toBeVisible()
   await expect(range).toHaveValue('85')
   expect(agent.mutations()).toHaveLength(1)
 })
@@ -89,7 +89,7 @@ test('the authoritative reply wins over the draft and over older polls', async (
   await page.clock.runFor(10_000)
   await stalePoll.waitForRequest()
   agent.on('PUT', PATH, { data: { ...enabled, charge_limit: 95 } })
-  await page.getByRole('button', { name: 'Apply limit' }).click()
+  await page.getByRole('button', { name: '应用上限' }).click()
   await expect(range).toHaveValue('95')
   stalePoll.resolve(enabled)
   await advanceHeartbeat(page, agent, 0, PATH).catch(() => {})
@@ -98,7 +98,7 @@ test('the authoritative reply wins over the draft and over older polls', async (
 
 test('the range is disabled while the enforcer is off', async ({ page, agent }) => {
   agent.on('GET', PATH, { data: fx.chargeControl({ charge_limit_enabled: false, charge_limit: 90 }) })
-  await openApp(page, { group: 'system', tab: 'Metrics' })
-  await expect(page.getByLabel('Stop charging at')).toBeDisabled()
+  await openApp(page, { group: 'system', tab: '指标' })
+  await expect(page.getByLabel('停止充电阈值')).toBeDisabled()
   expect(agent.mutations()).toEqual([])
 })

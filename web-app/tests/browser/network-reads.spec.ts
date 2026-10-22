@@ -30,17 +30,17 @@ const awkwardClients = () =>
 
 async function openClients(page: Page, agent: MockAgent, withAwkward = false) {
   if (withAwkward) agent.on('GET', CLIENTS, { data: awkwardClients() })
-  await openApp(page, { group: 'network', tab: 'Clients' })
+  await openApp(page, { group: 'network', tab: '连接设备' })
 }
 
 test.describe('Clients (R07)', () => {
   test('first-load failure ends loading with an error, and Retry recovers', async ({ page, agent }) => {
     agent.fail('GET', CLIENTS, { times: 1, error: 'iw dump failed' })
-    await openApp(page, { group: 'network', tab: 'Clients' })
+    await openApp(page, { group: 'network', tab: '连接设备' })
     const alert = page.getByRole('alert').filter({ hasText: 'Could not read the connected clients' })
     await expect(alert).toContainText('iw dump failed')
-    await expect(page.getByText('No clients connected')).toHaveCount(0)
-    await alert.getByRole('button', { name: 'Retry' }).click()
+    await expect(page.getByText('暂无设备连接')).toHaveCount(0)
+    await alert.getByRole('button', { name: '重试' }).click()
     await expect(page.getByText('Connected clients (3)')).toBeVisible()
   })
 
@@ -48,20 +48,20 @@ test.describe('Clients (R07)', () => {
     await openClients(page, agent)
     await expect(page.getByText('Connected clients (3)')).toBeVisible()
     agent.fail('GET', CLIENTS, { error: 'iw dump failed' })
-    await page.getByRole('button', { name: 'Refresh' }).click()
+    await page.getByRole('button', { name: '刷新' }).click()
     await expect(page.getByText(/Showing the last client list that loaded.*iw dump failed/)).toBeVisible()
     await expect(page.getByText('Connected clients (3)')).toBeVisible()
     await expect(shown(page.getByText('synthetic-laptop'))).toBeVisible()
-    await expect(page.getByText('No clients connected')).toHaveCount(0)
+    await expect(page.getByText('暂无设备连接')).toHaveCount(0)
     agent.on('GET', CLIENTS, { data: fx.clients() })
-    await page.getByRole('button', { name: 'Retry' }).click()
+    await page.getByRole('button', { name: '重试' }).click()
     await expect(page.getByText(/Showing the last client list/)).toHaveCount(0)
   })
 
   test('a successful empty list says so; a failed first read does not', async ({ page, agent }) => {
     agent.on('GET', CLIENTS, { data: fx.clients({ clients: [] }) })
-    await openApp(page, { group: 'network', tab: 'Clients' })
-    await expect(page.getByText('No clients connected', { exact: true })).toBeVisible()
+    await openApp(page, { group: 'network', tab: '连接设备' })
+    await expect(page.getByText('暂无设备连接', { exact: true })).toBeVisible()
   })
 
   test('a USB-status failure is reported on the USB card and does not hide the clients', async ({ page, agent }) => {
@@ -74,18 +74,18 @@ test.describe('Clients (R07)', () => {
     await expect(page.getByText('Showing the last client list')).toHaveCount(0)
     await expect(shown(page.getByText('synthetic-usb-host'))).toBeVisible()
     agent.on('GET', USB, { data: fx.usbStatus() })
-    await usbAlert.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByText('Tether link')).toBeVisible()
+    await usbAlert.getByRole('button', { name: '重试' }).click()
+    await expect(page.getByText('共享网络连接')).toBeVisible()
     await expect(usbAlert).toHaveCount(0)
   })
 
   test('a clients failure does not hide a healthy USB link', async ({ page, agent }) => {
     await openClients(page, agent)
-    await expect(page.getByText('Tether link')).toBeVisible()
+    await expect(page.getByText('共享网络连接')).toBeVisible()
     agent.fail('GET', CLIENTS)
-    await page.getByRole('button', { name: 'Refresh' }).click()
+    await page.getByRole('button', { name: '刷新' }).click()
     await expect(page.getByText(/Showing the last client list/)).toBeVisible()
-    await expect(page.getByText('Tether link')).toBeVisible()
+    await expect(page.getByText('共享网络连接')).toBeVisible()
     await expect(page.getByText(/USB link details are unavailable/)).toHaveCount(0)
   })
 })
@@ -94,48 +94,48 @@ test.describe('Router (R07)', () => {
   test('a failed DNS read shows an error, no plausible defaults, and disables Apply', async ({ page, agent }) => {
     agent.fail('GET', '/api/router/dns', { error: 'uci show failed' })
     agent.on('PUT', '/api/router/dns', { data: {} })
-    await openApp(page, { group: 'network', tab: 'Router' })
+    await openApp(page, { group: 'network', tab: '路由设置' })
     const alert = page.getByRole('alert').filter({ hasText: 'Could not read the DNS settings' })
     await expect(alert).toContainText('uci show failed')
-    const apply = page.getByRole('button', { name: 'Apply DNS' })
+    const apply = page.getByRole('button', { name: '应用 DNS' })
     await expect(apply).toBeDisabled()
-    for (const name of ['Primary DNS (IPv4)', 'Secondary DNS (IPv4)', 'Primary DNS (IPv6)', 'Secondary DNS (IPv6)']) {
+    for (const name of ['首选 DNS（IPv4）', '备用 DNS（IPv4）', '首选 DNS（IPv6）', '备用 DNS（IPv6）']) {
       const input = page.getByRole('textbox', { name })
       await expect(input).toBeDisabled()
       await expect(input).toHaveValue('')
     }
     await expect(page.getByRole('button', { name: 'Fill Cloudflare DNS servers' })).toBeDisabled()
     // The LAN card is independent and stays usable.
-    await expect(page.getByRole('button', { name: 'Apply LAN' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: '应用局域网设置' })).toBeEnabled()
     expect(agent.mutations()).toEqual([])
 
     agent.on('GET', '/api/router/dns', { data: fx.dns() })
-    await alert.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByRole('textbox', { name: 'Primary DNS (IPv4)' })).toHaveValue('192.0.2.1')
+    await alert.getByRole('button', { name: '重试' }).click()
+    await expect(page.getByRole('textbox', { name: '首选 DNS（IPv4）' })).toHaveValue('192.0.2.1')
     await expect(apply).toBeEnabled()
     await expect(alert).toHaveCount(0)
   })
 
   test('a failed LAN read disables Apply and shows no default address', async ({ page, agent }) => {
     agent.fail('GET', '/api/router/lan', { error: 'uci show failed' })
-    await openApp(page, { group: 'network', tab: 'Router' })
+    await openApp(page, { group: 'network', tab: '路由设置' })
     await expect(page.getByRole('alert').filter({ hasText: 'Could not read the LAN settings' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Apply LAN' })).toBeDisabled()
-    await expect(page.getByRole('textbox', { name: 'LAN IP' })).toHaveValue('')
-    await expect(page.getByRole('textbox', { name: 'LAN IP' })).toBeDisabled()
-    await expect(page.getByRole('switch', { name: 'DHCP server' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: '应用局域网设置' })).toBeDisabled()
+    await expect(page.getByRole('textbox', { name: '局域网 IP' })).toHaveValue('')
+    await expect(page.getByRole('textbox', { name: '局域网 IP' })).toBeDisabled()
+    await expect(page.getByRole('switch', { name: 'DHCP 服务' })).toBeDisabled()
     expect(agent.mutations()).toEqual([])
   })
 
   test('a healthy read fills the form, and an edit followed by Apply sends the edited values', async ({ page, agent }) => {
     agent.on('PUT', '/api/router/dns', { data: {} })
-    await openApp(page, { group: 'network', tab: 'Router' })
+    await openApp(page, { group: 'network', tab: '路由设置' })
     await page.getByRole('button', { name: 'Fill Quad9 DNS servers' }).click()
     agent.on('GET', '/api/router/dns', { data: fx.dns({ prefer_dns_manual: '9.9.9.9' }) })
-    await page.getByRole('button', { name: 'Apply DNS' }).click()
+    await page.getByRole('button', { name: '应用 DNS' }).click()
     await expect.poll(() => agent.requests({ method: 'PUT', path: '/api/router/dns' }).length).toBe(1)
     expect(agent.requests({ method: 'PUT', path: '/api/router/dns' })[0].body).toMatchObject({ dns_mode: 'manual', prefer_dns_manual: '9.9.9.9', standby_dns_manual: '149.112.112.112' })
-    await expect(page.getByRole('textbox', { name: 'Primary DNS (IPv4)' })).toHaveValue('9.9.9.9')
+    await expect(page.getByRole('textbox', { name: '首选 DNS（IPv4）' })).toHaveValue('9.9.9.9')
   })
 })
 
@@ -161,7 +161,7 @@ test.describe('stacked client rows below sm (U07)', () => {
     await expect(shown(other.getByText('02:00:5E:00:00:05'))).toBeVisible()
     // Unknown medium is still listed, and a missing hostname is announced as such.
     await expect(shown(other.getByText('02:00:5E:00:00:06'))).toBeVisible()
-    await expect(other.getByText('No hostname').first()).toBeAttached()
+    await expect(other.getByText('无主机名').first()).toBeAttached()
 
     const wifi = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Wi-Fi (2)' }) })
     await expect(shown(wifi.getByText('TX 2402 / RX 2402 Mbps'))).toBeVisible()
@@ -200,22 +200,22 @@ test.describe('no horizontal overflow at 320 px', () => {
   test('Wi-Fi, in view and edit mode with awkward values', async ({ page, agent }) => {
     agent.on('GET', '/api/wifi/status', { data: fx.wifiStatus({ ssid_2g: 'S'.repeat(32), ssid_5g: 'Synthetic-WiFi-with-a-long-5GHz-name', key_2g: 'p'.repeat(40), guest_ssid: 'G'.repeat(32) }) })
     await openApp(page, { group: 'network', tab: 'Wi-Fi' })
-    await expect(page.getByText('Master switch')).toBeVisible()
+    await expect(page.getByText('总开关', { exact: true })).toBeVisible()
     expect(await overflow(page)).toEqual([])
     await page.getByRole('button', { name: 'Edit 2.4 GHz settings' }).click()
     await page.getByRole('button', { name: 'Edit 5 GHz settings' }).click()
-    await page.getByRole('textbox', { name: 'TX power (%)' }).first().fill('12.5')
+    await page.getByRole('textbox', { name: '发射功率（%）' }).first().fill('12.5')
     expect(await overflow(page)).toEqual([])
   })
 
   test('Router with a read failure and with healthy data', async ({ page, agent }) => {
     agent.fail('GET', '/api/router/dns', { error: 'uci show failed with a rather long explanatory message for narrow screens' })
-    await openApp(page, { group: 'network', tab: 'Router' })
+    await openApp(page, { group: 'network', tab: '路由设置' })
     await expect(page.getByRole('alert').filter({ hasText: 'Could not read the DNS settings' })).toBeVisible()
     expect(await overflow(page)).toEqual([])
     agent.on('GET', '/api/router/dns', { data: fx.dns({ ipv6_wan_prefer_dns_manual: '2001:db8:85a3:0:0:8a2e:370:7334' }) })
-    await page.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByRole('textbox', { name: 'Primary DNS (IPv4)' })).toBeEnabled()
+    await page.getByRole('button', { name: '重试' }).click()
+    await expect(page.getByRole('textbox', { name: '首选 DNS（IPv4）' })).toBeEnabled()
     expect(await overflow(page)).toEqual([])
   })
 })

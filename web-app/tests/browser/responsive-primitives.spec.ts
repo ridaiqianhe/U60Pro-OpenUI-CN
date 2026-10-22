@@ -24,12 +24,12 @@ test.describe('touch hit areas (375 px, coarse pointer)', () => {
 
   test('buttons, switches, segmented items, tabs and nav controls are at least 44 x 44', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { data: {} })
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await expect(page.getByRole('button', { name: 'Reboot', exact: true })).toBeVisible()
+    await openApp(page, { group: 'system', tab: '设置' })
+    await expect(page.getByRole('button', { name: '重启设备', exact: true })).toBeVisible()
     await expect(page.getByRole('radio').first()).toBeVisible()
 
     // Shared `Button`s on this page. Feature-specific custom buttons are reported below, not asserted.
-    for (const name of ['Reboot', 'Shut down', 'Restart agent', 'Sign out']) {
+    for (const name of ['重启设备', '关机', '重启管理后端', '退出登录']) {
       const b = await page.getByRole('button', { name }).first().boundingBox()
       expect(b, `${name} button`).not.toBeNull()
       expect(b!.width, `${name} width`).toBeGreaterThanOrEqual(MIN_HIT)
@@ -42,8 +42,8 @@ test.describe('touch hit areas (375 px, coarse pointer)', () => {
       switches: '[role="switch"]',
       segmented: '[role="radio"]',
       tabs: '[role="tab"]',
-      nav: 'nav[aria-label="Main"] button',
-      theme: 'header button[aria-label="Toggle theme"]',
+      nav: 'nav[aria-label="主导航"] button',
+      theme: 'header button[aria-label="切换主题"]',
     }
     for (const [what, sel] of Object.entries(groups)) {
       const boxes = await box(page, sel)
@@ -56,7 +56,7 @@ test.describe('touch hit areas (375 px, coarse pointer)', () => {
   })
 
   test('the switch keeps its compact 24 x 40 track inside the larger hit area', async ({ page }) => {
-    await openApp(page, { group: 'system', tab: 'Settings' })
+    await openApp(page, { group: 'system', tab: '设置' })
     const sw = page.getByRole('switch').first()
     await expect(sw).toBeVisible()
     const track = await sw.evaluate((b) => {
@@ -68,10 +68,10 @@ test.describe('touch hit areas (375 px, coarse pointer)', () => {
 
   test('toast dismiss has a 44 x 44 target', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { error: 'synthetic failure', status: 500 })
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await page.getByRole('button', { name: 'Reboot', exact: true }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Reboot' }).click()
-    const dismiss = page.getByRole('button', { name: 'Dismiss notification' })
+    await openApp(page, { group: 'system', tab: '设置' })
+    await page.getByRole('button', { name: '重启设备', exact: true }).click()
+    await page.getByRole('dialog').getByRole('button', { name: '重启设备' }).click()
+    const dismiss = page.getByRole('button', { name: '关闭通知' })
     await expect(dismiss).toBeVisible()
     const b = await dismiss.boundingBox()
     expect(b!.width).toBeGreaterThanOrEqual(MIN_HIT)
@@ -80,10 +80,10 @@ test.describe('touch hit areas (375 px, coarse pointer)', () => {
 
   test('confirm dialog buttons meet the target size and fit the viewport', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { data: {} })
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await page.getByRole('button', { name: 'Reboot', exact: true }).click()
+    await openApp(page, { group: 'system', tab: '设置' })
+    await page.getByRole('button', { name: '重启设备', exact: true }).click()
     const dialog = page.getByRole('dialog')
-    for (const name of ['Cancel', 'Reboot']) {
+    for (const name of ['取消', '重启设备']) {
       const b = await dialog.getByRole('button', { name }).boundingBox()
       expect(b!.width).toBeGreaterThanOrEqual(MIN_HIT)
       expect(b!.height).toBeGreaterThanOrEqual(MIN_HIT)
@@ -98,10 +98,10 @@ test.describe('fine pointer keeps the compact sizes', () => {
 
   test('switch 24 x 40, medium button 36 px high', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { data: {} })
-    await openApp(page, { group: 'system', tab: 'Settings' })
+    await openApp(page, { group: 'system', tab: '设置' })
     const sw = await page.getByRole('switch').first().boundingBox()
     expect(sw).toMatchObject({ width: 40, height: 24 })
-    const btn = await page.getByRole('button', { name: 'Reboot', exact: true }).boundingBox()
+    const btn = await page.getByRole('button', { name: '重启设备', exact: true }).boundingBox()
     expect(btn!.height).toBe(36)
   })
 })

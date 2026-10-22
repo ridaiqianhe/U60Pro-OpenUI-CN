@@ -72,7 +72,7 @@ const CORS = {
 const key = (method: string, path: string) => `${method.toUpperCase()} ${path}`
 
 /** Read-only POST endpoints: not counted by mutations(). */
-const READ_ONLY_POSTS = new Set(['/api/sms/list'])
+const READ_ONLY_POSTS = new Set(['/api/sms/list', '/cgi-bin/wg-login'])
 
 interface Override {
   reply: ReplyArg
@@ -251,6 +251,11 @@ export function registerDefaults(agent: MockAgent) {
   const ok = (data: unknown): Reply => ({ data })
   const get = (path: string, data: unknown | (() => unknown)) =>
     agent.on('GET', path, () => ok(typeof data === 'function' ? (data as () => unknown)() : data))
+  // Extensions are simulated at the same origin; no CGI can fall through to a real service.
+  get('/cgi-bin/home-qci', { qci: 9, ambr_dl_mbps: 1000, ambr_ul_mbps: 100, connections: 12 })
+  get('/cgi-bin/neighbor-scan', { status: 'idle', cells: [] })
+  get('/cgi-bin/sms-forward', { schema: 2, enabled: false, cleanup_enabled: false, channels: [], pending: 0, history: [] })
+  agent.on('POST', '/cgi-bin/wg-login', { error: 'Password required for this synthetic source', status: 403 })
   get('/api/dashboard', () => fx.dashboard())
   get('/api/device', fx.device())
   get('/api/cpu', fx.cpu())
@@ -294,7 +299,8 @@ async function installRouting(context: BrowserContext, agent: AgentImpl, allowed
       /* fall through to block */
     }
     try {
-      if (origin === allowedOrigin) await route.fallback()
+      if (origin === allowedOrigin && new URL(url).pathname.startsWith('/cgi-bin/')) await agent.handle(route)
+      else if (origin === allowedOrigin) await route.fallback()
       else if (origin === AGENT_ORIGIN) await agent.handle(route)
       else {
         agent.noteBlocked(`${route.request().method()} ${url}`)

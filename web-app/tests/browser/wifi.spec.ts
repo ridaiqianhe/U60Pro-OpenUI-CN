@@ -19,7 +19,7 @@ async function openWifi(page: Page, agent: MockAgent, over?: Record<string, unkn
   if (over) agent.on('GET', STATUS, { data: fx.wifiStatus(over) })
   agent.on('PUT', SETTINGS, OK)
   await openApp(page, { group: 'network', tab: 'Wi-Fi' })
-  await expect(page.getByText('Master switch')).toBeVisible()
+  await expect(page.getByText('总开关', { exact: true })).toBeVisible()
 }
 
 const puts = (agent: MockAgent) => agent.requests({ method: 'PUT', path: SETTINGS })
@@ -34,7 +34,7 @@ test.describe('TX power (R09)', () => {
     await openWifi(page, agent, { txpower_5g: '25' })
     await expect(card(page, '5 GHz').getByText('25%')).toBeVisible()
     const c = await edit(page, '5 GHz')
-    await expect(c.getByRole('textbox', { name: 'TX power (%)' })).toHaveValue('25')
+    await expect(c.getByRole('textbox', { name: '发射功率（%）' })).toHaveValue('25')
     await expect(c.getByText('Default')).toHaveCount(0)
     expect(agent.mutations()).toEqual([])
   })
@@ -42,7 +42,7 @@ test.describe('TX power (R09)', () => {
   test('the observed 80%, which is not a preset, is shown and editable', async ({ page, agent }) => {
     await openWifi(page, agent)
     const c = await edit(page, '2.4 GHz')
-    const tx = c.getByRole('textbox', { name: 'TX power (%)' })
+    const tx = c.getByRole('textbox', { name: '发射功率（%）' })
     await expect(tx).toHaveValue('80')
     await tx.fill('60')
     await page.getByRole('button', { name: 'Save 2.4 GHz settings' }).click()
@@ -56,7 +56,7 @@ test.describe('TX power (R09)', () => {
   test('an explicit 100 sends 100 for the right band', async ({ page, agent }) => {
     await openWifi(page, agent)
     const c = await edit(page, '5 GHz')
-    await c.getByRole('textbox', { name: 'TX power (%)' }).fill('100')
+    await c.getByRole('textbox', { name: '发射功率（%）' }).fill('100')
     await page.getByRole('button', { name: 'Save 5 GHz settings' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Apply changes' }).click()
     await expect.poll(() => puts(agent).length).toBe(1)
@@ -76,7 +76,7 @@ test.describe('TX power (R09)', () => {
   test('0, 101 and decimals are rejected before anything is sent', async ({ page, agent }) => {
     await openWifi(page, agent)
     const c = await edit(page, '2.4 GHz')
-    const tx = c.getByRole('textbox', { name: 'TX power (%)' })
+    const tx = c.getByRole('textbox', { name: '发射功率（%）' })
     const save = page.getByRole('button', { name: 'Save 2.4 GHz settings' })
     for (const bad of ['0', '101', '12.5']) {
       await tx.fill(bad)
@@ -89,13 +89,13 @@ test.describe('TX power (R09)', () => {
     expect(agent.mutations()).toEqual([])
   })
 
-  test('unknown TX power stays blank ("Keep current") and is not sent', async ({ page, agent }) => {
+  test('unknown TX power stays blank ("保持当前设置") and is not sent', async ({ page, agent }) => {
     await openWifi(page, agent, { txpower_2g: '' })
-    await expect(card(page, '2.4 GHz').getByText('Configured TX power')).toBeVisible()
+    await expect(card(page, '2.4 GHz').getByText('设置发射功率')).toBeVisible()
     const c = await edit(page, '2.4 GHz')
-    const tx = c.getByRole('textbox', { name: 'TX power (%)' })
+    const tx = c.getByRole('textbox', { name: '发射功率（%）' })
     await expect(tx).toHaveValue('')
-    await expect(tx).toHaveAttribute('placeholder', 'Keep current')
+    await expect(tx).toHaveAttribute('placeholder', '保持当前设置')
     await c.getByRole('textbox', { name: 'SSID' }).fill('Only-Name')
     await page.getByRole('button', { name: 'Save 2.4 GHz settings' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Apply changes' }).click()
@@ -106,7 +106,7 @@ test.describe('TX power (R09)', () => {
   test('the status is re-read after acknowledgement and the verified value is shown', async ({ page, agent }) => {
     await openWifi(page, agent)
     const c = await edit(page, '5 GHz')
-    await c.getByRole('textbox', { name: 'TX power (%)' }).fill('100')
+    await c.getByRole('textbox', { name: '发射功率（%）' }).fill('100')
     const before = agent.requests({ method: 'GET', path: STATUS }).length
     agent.on('GET', STATUS, { data: fx.wifiStatus({ txpower_5g: '100' }) })
     await page.getByRole('button', { name: 'Save 5 GHz settings' }).click()
@@ -119,7 +119,7 @@ test.describe('TX power (R09)', () => {
   test('a failed read-back is shown as unverified, never as a confirmed value', async ({ page, agent }) => {
     await openWifi(page, agent)
     const c = await edit(page, '5 GHz')
-    await c.getByRole('textbox', { name: 'TX power (%)' }).fill('100')
+    await c.getByRole('textbox', { name: '发射功率（%）' }).fill('100')
     agent.fail('GET', STATUS, { times: 1 })
     await page.getByRole('button', { name: 'Save 5 GHz settings' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Apply changes' }).click()
@@ -127,7 +127,7 @@ test.describe('TX power (R09)', () => {
     await expect(page.getByText('the device now reports the new settings')).toHaveCount(0)
     // A read-only check recovers; the mutation is never repeated.
     agent.on('GET', STATUS, { data: fx.wifiStatus({ txpower_5g: '100' }) })
-    await page.getByRole('button', { name: 'Check device' }).click()
+    await page.getByRole('button', { name: '检查设备' }).click()
     await expect(page.getByText('the device now reports the new settings')).toBeVisible()
     expect(puts(agent)).toHaveLength(1)
   })
@@ -136,14 +136,14 @@ test.describe('TX power (R09)', () => {
 test.describe('confirmations before connection-dropping changes (R11)', () => {
   test('Cancel on the Wi-Fi-off confirmation sends nothing; Confirm sends exactly one reviewed PUT', async ({ page, agent }) => {
     await openWifi(page, agent)
-    const master = page.getByRole('switch', { name: 'Master Wi-Fi switch' })
+    const master = page.getByRole('switch', { name: 'Wi-Fi 总开关' })
     await master.click()
     const dialog = page.getByRole('dialog', { name: 'Turn off all Wi-Fi?' })
     await expect(dialog).toContainText('possibly this browser')
     await expect(dialog).toContainText('Mobile data')
     await expect(dialog).toContainText('USB-C')
-    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await expect(dialog.getByRole('button', { name: '取消' })).toBeFocused()
+    await dialog.getByRole('button', { name: '取消' }).click()
     await expect(dialog).toBeHidden()
     expect(agent.mutations()).toEqual([])
 
@@ -157,19 +157,19 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
   test('after acknowledgement the page says "applied, verifying" until the read-back arrives', async ({ page, agent }) => {
     await openWifi(page, agent)
     const held = agent.defer('GET', STATUS)
-    await page.getByRole('switch', { name: 'Master Wi-Fi switch' }).click()
+    await page.getByRole('switch', { name: 'Wi-Fi 总开关' }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Turn off Wi-Fi' }).click()
     await held.waitForRequest()
-    await expect(page.getByText(/Global Wi-Fi: applied\..*Verifying/)).toBeVisible()
+    await expect(page.getByText(/Wi-Fi 总开关: applied\..*Verifying/)).toBeVisible()
     await expect(page.getByText('the device now reports')).toHaveCount(0)
     held.resolve(fx.wifiStatus({ wifi_onoff: '0' }))
-    await expect(page.getByText('Global Wi-Fi: the device now reports the new settings.')).toBeVisible()
+    await expect(page.getByText('Wi-Fi 总开关: the device now reports the new settings.')).toBeVisible()
     await expect(page.getByText('Off — all Wi-Fi radios are globally disabled')).toBeVisible()
   })
 
   test('turning Wi-Fi back on needs no confirmation', async ({ page, agent }) => {
     await openWifi(page, agent, { wifi_onoff: '0' })
-    await page.getByRole('switch', { name: 'Master Wi-Fi switch' }).click()
+    await page.getByRole('switch', { name: 'Wi-Fi 总开关' }).click()
     await expect.poll(() => agent.mutations().length).toBe(1)
     expect(agent.mutations()[0].body).toEqual({ wifi_onoff: '1' })
     await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -181,7 +181,7 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
     const dialog = page.getByRole('dialog', { name: 'Turn off 5 GHz Wi-Fi?' })
     await expect(dialog).toContainText('Devices connected on 5 GHz, possibly this browser, will disconnect')
     await expect(dialog).toContainText('Reconnect to the 2.4 GHz network or use USB-C')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
 
     await page.getByRole('switch', { name: '5 GHz radio' }).click()
@@ -194,8 +194,8 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
     await openWifi(page, agent)
     const c = await edit(page, '2.4 GHz')
     await c.getByRole('textbox', { name: 'SSID' }).fill('Brand-New')
-    await c.getByLabel('Password').fill('synthetic-secret-1')
-    await c.getByLabel('Channel').selectOption('11')
+    await c.getByLabel('密码').fill('synthetic-secret-1')
+    await c.getByLabel('信道').selectOption('11')
     const save = page.getByRole('button', { name: 'Save 2.4 GHz settings' })
     await save.click()
     const dialog = page.getByRole('dialog', { name: 'Apply 2.4 GHz Wi-Fi changes?' })
@@ -203,7 +203,7 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
     await expect(dialog).toContainText('Changed (not shown)')
     await expect(dialog).toContainText('Auto → 11')
     expect(await dialog.textContent()).not.toContain('synthetic-secret-1')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
     // The draft is still there after Cancel.
     await expect(c.getByRole('textbox', { name: 'SSID' })).toHaveValue('Brand-New')
@@ -218,16 +218,16 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
 
   test('band sync is reviewed first and sends the copied settings once', async ({ page, agent }) => {
     await openWifi(page, agent, { key_2g: 'synthetic-pass-9', ssid_2g: 'Copy-Me' })
-    await page.getByRole('button', { name: 'Use 2.4 GHz for both' }).click()
+    await page.getByRole('button', { name: '两频段使用 2.4 GHz 配置' }).click()
     const dialog = page.getByRole('dialog', { name: 'Copy 2.4 GHz settings to 5 GHz?' })
     await expect(dialog).toContainText('Copy-Me')
     await expect(dialog).toContainText('Copied (not shown)')
     await expect(dialog).toContainText('Devices connected on 5 GHz, possibly this browser')
     expect(await dialog.textContent()).not.toContain('synthetic-pass-9')
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
 
-    await page.getByRole('button', { name: 'Use 2.4 GHz for both' }).click()
+    await page.getByRole('button', { name: '两频段使用 2.4 GHz 配置' }).click()
     await dialog.getByRole('button', { name: 'Copy settings' }).click()
     await expect.poll(() => puts(agent).length).toBe(1)
     expect(puts(agent)[0].body).toEqual({
@@ -247,7 +247,7 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
     expect(puts(agent)).toHaveLength(1)
     // The check is read-only: it reads the settings and compares, it does not resend.
     agent.on('GET', STATUS, { data: fx.wifiStatus({ radio2_disabled: '1' }) })
-    await page.getByRole('button', { name: 'Check device' }).click()
+    await page.getByRole('button', { name: '检查设备' }).click()
     await expect(page.getByText('2.4 GHz radio: the device now reports the new settings.')).toBeVisible()
     expect(puts(agent)).toHaveLength(1)
   })
@@ -271,7 +271,7 @@ test.describe('drafts survive re-reads (R03)', () => {
     await openWifi(page, agent)
     const c5 = await edit(page, '5 GHz')
     await c5.getByRole('textbox', { name: 'SSID' }).fill('Unsaved-5')
-    await expect(c5.getByText('Unsaved changes')).toBeVisible()
+    await expect(c5.getByText('有未保存的修改')).toBeVisible()
 
     const c2 = await edit(page, '2.4 GHz')
     await c2.getByRole('textbox', { name: 'SSID' }).fill('Saved-24')
@@ -282,7 +282,7 @@ test.describe('drafts survive re-reads (R03)', () => {
     await expect(page.getByText('2.4 GHz settings: the device now reports the new settings.')).toBeVisible()
     await expect(card(page, '2.4 GHz').getByText('Saved-24')).toBeVisible()
     await expect(c5.getByRole('textbox', { name: 'SSID' })).toHaveValue('Unsaved-5')
-    await expect(c5.getByText('Unsaved changes')).toBeVisible()
+    await expect(c5.getByText('有未保存的修改')).toBeVisible()
     expect(puts(agent)).toHaveLength(1)
     expect(puts(agent)[0].body).toEqual({ ssid_2g: 'Saved-24' })
 
@@ -304,7 +304,7 @@ test.describe('drafts survive re-reads (R03)', () => {
     await page.getByRole('dialog').getByRole('button', { name: 'Apply changes' }).click()
     await expect(c.getByText(/The device changed this band's settings while you were editing/)).toBeVisible()
     await expect(c.getByRole('textbox', { name: 'SSID' })).toHaveValue('Mine')
-    await c.getByRole('button', { name: 'Reload from device' }).click()
+    await c.getByRole('button', { name: '从设备重新加载' }).click()
     await expect(c.getByRole('textbox', { name: 'SSID' })).toHaveValue('External-Change')
     await expect(c.getByText(/The device changed/)).toHaveCount(0)
   })
@@ -317,9 +317,9 @@ test.describe('read states (R07)', () => {
     await openApp(page, { group: 'network', tab: 'Wi-Fi' })
     const alert = page.getByRole('alert').filter({ hasText: 'Could not read the Wi-Fi settings' })
     await expect(alert).toContainText('ubus timeout')
-    await expect(page.getByText('Master switch')).toHaveCount(0)
-    await alert.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByText('Master switch')).toBeVisible()
+    await expect(page.getByText('总开关', { exact: true })).toHaveCount(0)
+    await alert.getByRole('button', { name: '重试' }).click()
+    await expect(page.getByText('总开关', { exact: true })).toBeVisible()
     await expect(alert).toHaveCount(0)
   })
 })
@@ -328,10 +328,10 @@ test.describe('advice wording (R13)', () => {
   test('never claims "no obvious channel conflicts" and omits the empty advice section', async ({ page, agent }) => {
     await openWifi(page, agent, { actual_bw_5g: '80 MHz', htmode_5g: 'EHT80', channel_5g: '44', clients_5g: 40 })
     const c5 = card(page, '5 GHz')
-    await expect(c5.getByText('Configured width')).toBeVisible()
-    await expect(c5.getByText('Current width')).toBeVisible()
+    await expect(c5.getByText('设置带宽')).toBeVisible()
+    await expect(c5.getByText('当前带宽')).toBeVisible()
     await expect(page.getByText(/no obvious|no conflict|improve stability/i)).toHaveCount(0)
-    await expect(c5.getByText('Configuration notes')).toHaveCount(0)
+    await expect(c5.getByText('配置说明')).toHaveCount(0)
   })
 
   test('compares widths numerically: EHT80 vs 80 MHz is silent, EHT80 vs 40 MHz is an observation', async ({ page, agent }) => {
@@ -363,7 +363,7 @@ test.describe('labels and names (U03/U06)', () => {
       return bad
     })
     expect(unnamed).toEqual([])
-    await expect(page.getByRole('switch', { name: 'Hidden SSID' })).toBeVisible()
+    await expect(page.getByRole('switch', { name: '隐藏 SSID' })).toBeVisible()
   })
 })
 
@@ -374,9 +374,9 @@ test.describe('touch (U06) at 375 px', () => {
     await openWifi(page, agent)
     await edit(page, '2.4 GHz')
     const targets = [
-      page.getByRole('switch', { name: 'Master Wi-Fi switch' }),
+      page.getByRole('switch', { name: 'Wi-Fi 总开关' }),
       page.getByRole('switch', { name: '5 GHz radio' }),
-      page.getByRole('switch', { name: 'Hidden SSID' }),
+      page.getByRole('switch', { name: '隐藏 SSID' }),
       page.getByRole('button', { name: 'Edit 5 GHz settings' }),
       page.getByRole('button', { name: 'Save 2.4 GHz settings' }),
       page.getByRole('button', { name: 'Cancel editing 2.4 GHz' }),

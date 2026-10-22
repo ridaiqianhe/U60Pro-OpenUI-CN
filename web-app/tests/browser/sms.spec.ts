@@ -28,9 +28,9 @@ function listWith(agent: MockAgent, messages: () => Json[]) {
 }
 
 const listRequests = (agent: MockAgent) => agent.requests({ method: 'POST', path: '/api/sms/list' })
-const openSms = (page: Page) => openApp(page, { group: 'modem', tab: 'SMS' })
+const openSms = (page: Page) => openApp(page, { group: 'modem', tab: '短信' })
 const message = (page: Page, text: string) => page.getByRole('button', { name: new RegExp(text) })
-const box = (page: Page, name: string | RegExp) => page.getByRole('radiogroup', { name: 'Message box' }).getByRole('radio', { name })
+const box = (page: Page, name: string | RegExp) => page.getByRole('radiogroup', { name: '短信信箱' }).getByRole('radio', { name })
 
 test.describe('collection ownership', () => {
   test('a list response that started before a delete cannot resurrect the message', async ({ page, agent }) => {
@@ -46,13 +46,13 @@ test.describe('collection ownership', () => {
 
     // An older refresh is still in flight when the delete completes.
     const oldList = agent.defer('POST', '/api/sms/list')
-    await page.getByRole('button', { name: 'Refresh messages' }).click()
+    await page.getByRole('button', { name: '刷新短信' }).click()
     await oldList.waitForRequest()
 
-    await page.getByRole('button', { name: 'Delete', exact: true }).click()
-    await page.getByRole('dialog', { name: 'Delete this message?' }).getByRole('button', { name: 'Delete' }).click()
+    await page.getByRole('button', { name: '删除', exact: true }).click()
+    await page.getByRole('dialog', { name: '删除这条短信？' }).getByRole('button', { name: '删除' }).click()
     await expect(message(page, 'Synthetic read gamma')).toHaveCount(0)
-    await expect(page.getByText('No message selected')).toBeVisible()
+    await expect(page.getByText('尚未选择短信')).toBeVisible()
     // The redundant success toast is gone; the row disappearing is the confirmation.
     await expect(page.locator('[data-toast]')).toHaveCount(0)
 
@@ -71,7 +71,7 @@ test.describe('collection ownership', () => {
     await expect(box(page, 'Inbox (2)')).toBeVisible()
 
     const oldList = agent.defer('POST', '/api/sms/list')
-    await page.getByRole('button', { name: 'Refresh messages' }).click()
+    await page.getByRole('button', { name: '刷新短信' }).click()
     await oldList.waitForRequest()
 
     await message(page, 'Synthetic unread alpha').click()
@@ -94,7 +94,7 @@ test.describe('collection ownership', () => {
     await expect(page.getByText(/did not mark that message as read/)).toBeVisible()
     await expect(page.getByText(/synthetic read failure/)).toBeVisible()
     await expect(box(page, 'Inbox (2)')).toBeVisible()
-    await expect(message(page, 'Synthetic unread alpha').getByText('Unread', { exact: true })).toBeAttached()
+    await expect(message(page, 'Synthetic unread alpha').getByText('未读', { exact: true })).toBeAttached()
     // The message itself is still readable.
     await expect(page.getByText('From: +1000000101')).toBeVisible()
     expect(agent.requests({ method: 'POST', path: '/api/sms/read' })).toHaveLength(1)
@@ -106,7 +106,7 @@ test.describe('collection ownership', () => {
     await expect(box(page, 'Inbox (2)')).toBeVisible()
     expect(listRequests(agent)).toHaveLength(1)
 
-    await box(page, 'Sent').click()
+    await box(page, '已发送').click()
     await expect(box(page, 'Inbox (2)')).toBeVisible()
     await expect(message(page, 'Synthetic sent delta')).toBeVisible()
     await expect(message(page, 'Synthetic unread alpha')).toHaveCount(0)
@@ -125,9 +125,9 @@ test.describe('collection ownership', () => {
     await expect(page.getByText('From: +1000000102')).toBeVisible()
 
     messages = messages.filter((m) => m.id !== 102)
-    await page.getByRole('button', { name: 'Refresh messages' }).click()
+    await page.getByRole('button', { name: '刷新短信' }).click()
     await expect(message(page, 'Synthetic read gamma')).toHaveCount(0)
-    await expect(page.getByText('No message selected')).toBeVisible()
+    await expect(page.getByText('尚未选择短信')).toBeVisible()
   })
 
   test('sending refreshes the whole collection whichever box is showing', async ({ page, agent }) => {
@@ -138,12 +138,12 @@ test.describe('collection ownership', () => {
       return { data: {} }
     })
     await openSms(page)
-    await page.getByRole('button', { name: 'New' }).click()
-    await page.getByRole('textbox', { name: 'To' }).fill('+10000000999')
-    await page.getByRole('textbox', { name: 'Message' }).fill('Synthetic outgoing epsilon')
-    await page.getByRole('button', { name: 'Send', exact: true }).click()
+    await page.getByRole('button', { name: '新建' }).click()
+    await page.getByRole('textbox', { name: '收件人' }).fill('+10000000999')
+    await page.getByRole('textbox', { name: '短信' }).fill('Synthetic outgoing epsilon')
+    await page.getByRole('button', { name: '发送', exact: true }).click()
     await expect.poll(() => listRequests(agent).length).toBe(2)
-    await box(page, 'Sent').click()
+    await box(page, '已发送').click()
     await expect(message(page, 'Synthetic outgoing epsilon')).toBeVisible()
     expect(agent.requests({ method: 'POST', path: '/api/sms/send' }).map((r) => r.body)).toEqual([
       { number: '+10000000999', message: 'Synthetic outgoing epsilon' },
@@ -151,15 +151,15 @@ test.describe('collection ownership', () => {
   })
 })
 
-test.describe('read failures are not "No messages"', () => {
+test.describe('read failures are not "暂无短信"', () => {
   test('a list failure shows an error with Retry; Retry recovers', async ({ page, agent }) => {
     agent.fail('POST', '/api/sms/list', { status: 503, error: 'synthetic outage' })
     await openSms(page)
     await expect(page.getByText(/Messages could not be loaded/)).toBeVisible()
-    await expect(page.getByText('No messages')).toHaveCount(0)
+    await expect(page.getByText('暂无短信')).toHaveCount(0)
 
     listWith(agent, () => BASE)
-    await page.getByRole('button', { name: 'Retry' }).click()
+    await page.getByRole('button', { name: '重试' }).click()
     await expect(message(page, 'Synthetic unread alpha')).toBeVisible()
     await expect(page.getByText(/could not be loaded/)).toHaveCount(0)
   })
@@ -169,25 +169,25 @@ test.describe('read failures are not "No messages"', () => {
     await openSms(page)
     await expect(message(page, 'Synthetic unread alpha')).toBeVisible()
     agent.fail('POST', '/api/sms/list', { status: 503, error: 'synthetic outage' })
-    await page.getByRole('button', { name: 'Refresh messages' }).click()
+    await page.getByRole('button', { name: '刷新短信' }).click()
     await expect(page.getByText(/Showing the last messages loaded/)).toBeVisible()
     await expect(message(page, 'Synthetic unread alpha')).toBeVisible()
-    await expect(page.getByText('No messages')).toHaveCount(0)
+    await expect(page.getByText('暂无短信')).toHaveCount(0)
   })
 
-  test('a genuinely empty list is "No messages"', async ({ page, agent }) => {
+  test('a genuinely empty list is "暂无短信"', async ({ page, agent }) => {
     listWith(agent, () => [])
     await openSms(page)
-    await expect(page.getByText('No messages')).toBeVisible()
+    await expect(page.getByText('暂无短信')).toBeVisible()
   })
 
   test('the capability gate still blocks listing and offers a re-check', async ({ page, agent }) => {
     agent.on('GET', '/api/sms/capabilities', { data: fx.smsCapabilities({ ready: false, reason: 'Synthetic: modem busy' }) })
     await openSms(page)
-    await expect(page.getByText('Firmware WMS is not ready')).toBeVisible()
+    await expect(page.getByText('固件短信服务尚未就绪')).toBeVisible()
     await expect(page.getByText('Synthetic: modem busy')).toBeVisible()
     expect(listRequests(agent)).toHaveLength(0)
-    await expect(page.getByRole('button', { name: 'Check again' })).toBeVisible()
+    await expect(page.getByRole('button', { name: '重新检查' })).toBeVisible()
   })
 
   test('a capability read failure shows an error with Retry instead of a skeleton', async ({ page, agent }) => {
@@ -196,7 +196,7 @@ test.describe('read failures are not "No messages"', () => {
     await expect(page.getByText(/SMS availability could not be checked/)).toBeVisible()
     agent.on('GET', '/api/sms/capabilities', { data: fx.smsCapabilities() })
     listWith(agent, () => BASE)
-    await page.getByRole('button', { name: 'Retry' }).click()
+    await page.getByRole('button', { name: '重试' }).click()
     await expect(message(page, 'Synthetic unread alpha')).toBeVisible()
   })
 })

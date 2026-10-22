@@ -21,14 +21,14 @@ const usbMutations = (agent: MockAgent) => agent.mutations().filter((r) => r.pat
 const statusReads = (agent: MockAgent) => agent.requests({ method: 'GET', path: '/api/usb/status' }).length
 
 async function openUsb(page: Page, opts: { clock?: boolean } = {}) {
-  await openApp(page, { group: 'system', tab: 'Settings', clock: opts.clock })
-  await expect(page.getByText('Active mode', { exact: true })).toBeVisible()
+  await openApp(page, { group: 'system', tab: '设置', clock: opts.clock })
+  await expect(page.getByText('当前模式', { exact: true })).toBeVisible()
 }
 
 /** Select NCM as a draft and press Apply: opens the confirmation. */
 async function reviewNcm(page: Page) {
   await page.getByRole('radio', { name: 'NCM' }).click()
-  await page.getByRole('button', { name: 'Apply mode' }).click()
+  await page.getByRole('button', { name: '应用模式' }).click()
   const dialog = page.getByRole('dialog', { name: 'Switch USB to NCM?' })
   await expect(dialog).toBeVisible()
   return dialog
@@ -56,7 +56,7 @@ test.describe('USB mode: what is offered', () => {
       }),
     })
     await openUsb(page)
-    const radios = page.getByRole('radiogroup', { name: 'USB mode' }).getByRole('radio')
+    const radios = page.getByRole('radiogroup', { name: 'USB 模式' }).getByRole('radio')
     await expect(radios).toHaveText(['RNDIS', 'ECM', 'NCM'])
     await expect(page.getByText(/debug|adb/i)).toHaveCount(0)
     await expect(page.getByRole('button', { name: /debug|adb/i })).toHaveCount(0)
@@ -77,8 +77,8 @@ test.describe('USB mode: what is offered', () => {
     await openUsb(page)
     await expect(page.getByRole('radio', { name: 'NCM' })).toBeDisabled()
     await expect(page.getByText('NCM is not available on this firmware')).toBeVisible()
-    await expect(page.getByRole('switch', { name: 'NCM after boot' })).toBeDisabled()
-    await expect(page.getByRole('button', { name: 'Apply mode' })).toBeDisabled()
+    await expect(page.getByRole('switch', { name: '开机后使用 NCM' })).toBeDisabled()
+    await expect(page.getByRole('button', { name: '应用模式' })).toBeDisabled()
     expect(agent.mutations()).toEqual([])
   })
 
@@ -94,16 +94,16 @@ test.describe('USB mode: what is offered', () => {
 
   test('a failed status read is explicit, offers no controls, and Retry recovers', async ({ page, agent }) => {
     agent.fail('GET', '/api/usb/status', { status: 503, error: 'synthetic ubus failure' })
-    await openApp(page, { group: 'system', tab: 'Settings' })
+    await openApp(page, { group: 'system', tab: '设置' })
     const alert = page.getByRole('alert').filter({ hasText: 'USB status is unavailable' })
     await expect(alert).toBeVisible()
     await expect(alert).toContainText('synthetic ubus failure')
-    await expect(page.getByRole('radiogroup', { name: 'USB mode' })).toHaveCount(0)
+    await expect(page.getByRole('radiogroup', { name: 'USB 模式' })).toHaveCount(0)
     await expect(page.getByRole('radio', { name: 'NCM' })).toHaveCount(0)
 
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus() })
-    await alert.getByRole('button', { name: 'Retry' }).click()
-    await expect(page.getByText('Active mode', { exact: true })).toBeVisible()
+    await alert.getByRole('button', { name: '重试' }).click()
+    await expect(page.getByText('当前模式', { exact: true })).toBeVisible()
     await expect(page.getByRole('radio', { name: 'ECM' })).toBeChecked()
     expect(agent.mutations()).toEqual([])
   })
@@ -112,10 +112,10 @@ test.describe('USB mode: what is offered', () => {
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus({ active_mode: 'ecm', default_mode: 'ncm', ncm_persist_on_boot: true }) })
     await openUsb(page)
     const row = (label: string) => page.getByText(label, { exact: true }).locator('xpath=..')
-    await expect(row('Active mode')).toContainText('ECM')
-    await expect(row('Scheduled mode')).toContainText('None')
-    await expect(row('Boot default')).toContainText('NCM')
-    await expect(page.getByRole('switch', { name: 'NCM after boot' })).toBeChecked()
+    await expect(row('当前模式')).toContainText('ECM')
+    await expect(row('Scheduled mode')).toContainText('无')
+    await expect(row('开机默认')).toContainText('NCM')
+    await expect(page.getByRole('switch', { name: '开机后使用 NCM' })).toBeChecked()
     // Selecting a draft sends nothing.
     await page.getByRole('radio', { name: 'RNDIS' }).click()
     expect(agent.mutations()).toEqual([])
@@ -129,17 +129,17 @@ test.describe('USB mode: confirm before submission', () => {
     await expect(dialog).toContainText('re-enumerates')
     await expect(dialog).toContainText('Wi-Fi')
     await expect(dialog).toContainText('experimental')
-    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+    await expect(dialog.getByRole('button', { name: '取消' })).toBeFocused()
     expect(agent.mutations()).toEqual([])
   })
 
   test('Cancel sends zero requests and the draft stays editable', async ({ page, agent }) => {
     await openUsb(page)
     const dialog = await reviewNcm(page)
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     await expect(dialog).toBeHidden()
     expect(agent.mutations()).toEqual([])
-    await expect(page.getByRole('button', { name: 'Apply mode' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: '应用模式' })).toBeEnabled()
   })
 
   test('Escape sends zero requests', async ({ page, agent }) => {
@@ -161,7 +161,7 @@ test.describe('USB mode: confirm before submission', () => {
     expect(agent.mutations()).toHaveLength(1)
     // Accepted is not applied: the scheduled mode is shown and the active mode is unchanged.
     await expect(page.getByRole('status').filter({ hasText: 'NCM scheduled' })).toBeVisible()
-    await expect(page.getByText('Active mode', { exact: true }).locator('xpath=..')).toContainText('ECM')
+    await expect(page.getByText('当前模式', { exact: true }).locator('xpath=..')).toContainText('ECM')
     await expect(page.getByText('Scheduled mode', { exact: true }).locator('xpath=..')).toContainText('NCM')
   })
 
@@ -169,7 +169,7 @@ test.describe('USB mode: confirm before submission', () => {
     agent.on('PUT', '/api/usb/mode', { data: {} })
     await openUsb(page)
     await page.getByRole('radio', { name: 'RNDIS' }).click()
-    await page.getByRole('button', { name: 'Apply mode' }).click()
+    await page.getByRole('button', { name: '应用模式' }).click()
     const dialog = page.getByRole('dialog', { name: 'Switch USB to RNDIS?' })
     await expect(dialog).toContainText('re-enumerates')
     await dialog.getByRole('button', { name: 'Switch' }).click()
@@ -181,7 +181,7 @@ test.describe('USB mode: confirm before submission', () => {
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus({ active_mode: 'ncm' }) })
     await openUsb(page)
     await page.getByRole('radio', { name: 'ECM' }).click()
-    await page.getByRole('button', { name: 'Apply mode' }).click()
+    await page.getByRole('button', { name: '应用模式' }).click()
     await expect(page.getByRole('dialog', { name: 'Roll back to ECM?' })).toBeVisible()
     await page.keyboard.press('Escape')
     expect(usbMutations(agent)).toHaveLength(1)
@@ -191,7 +191,7 @@ test.describe('USB mode: confirm before submission', () => {
     agent.on('PUT', '/api/usb/mode', { data: NCM_SCHEDULED, status: 202 })
     await openUsb(page)
     await page.getByRole('radio', { name: 'NCM' }).click()
-    const apply = page.getByRole('button', { name: 'Apply mode' })
+    const apply = page.getByRole('button', { name: '应用模式' })
     await apply.evaluate((b: HTMLButtonElement) => {
       b.click()
       b.click()
@@ -215,7 +215,7 @@ test.describe('USB mode: confirm before submission', () => {
     await expect(page.getByRole('alert').filter({ hasText: 'mass_storage.0 function is missing' })).toBeVisible()
     await expect(page.getByText('NCM scheduled')).toHaveCount(0)
     expect(usbMutations(agent)).toHaveLength(1)
-    await expect(page.getByRole('button', { name: 'Apply mode' })).toBeEnabled()
+    await expect(page.getByRole('button', { name: '应用模式' })).toBeEnabled()
   })
 })
 
@@ -234,13 +234,13 @@ test.describe('USB mode: verifying a scheduled switch', () => {
 
     await recheck(page, agent)
     await expect(note).toBeVisible()
-    await expect(page.getByText('Active mode', { exact: true }).locator('xpath=..')).toContainText('ECM')
+    await expect(page.getByText('当前模式', { exact: true }).locator('xpath=..')).toContainText('ECM')
 
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus({ active_mode: 'ncm' }) })
     await recheck(page, agent)
     await expect(page.getByRole('status').filter({ hasText: 'Verified: the active USB mode is now NCM' })).toBeVisible()
-    await expect(page.getByText('Active mode', { exact: true }).locator('xpath=..')).toContainText('NCM')
-    await expect(page.getByText('Scheduled mode', { exact: true }).locator('xpath=..')).toContainText('None')
+    await expect(page.getByText('当前模式', { exact: true }).locator('xpath=..')).toContainText('NCM')
+    await expect(page.getByText('Scheduled mode', { exact: true }).locator('xpath=..')).toContainText('无')
 
     // Verification stopped: no further reads, and the mutation was never resent.
     const reads = statusReads(agent)
@@ -273,7 +273,7 @@ test.describe('USB mode: verifying a scheduled switch', () => {
 
     // Check again re-reads status only.
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus({ active_mode: 'ncm' }) })
-    await page.getByRole('button', { name: 'Check again' }).click()
+    await page.getByRole('button', { name: '重新检查' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'Verified' })).toBeVisible()
     expect(usbMutations(agent)).toHaveLength(1)
     expect(agent.mutations()).toHaveLength(1)
@@ -326,9 +326,9 @@ test.describe('USB mode: verifying a scheduled switch', () => {
     const dialog = await reviewNcm(page)
     await dialog.getByRole('button', { name: 'Switch' }).click()
     await expect(page.getByRole('status').filter({ hasText: 'NCM scheduled' })).toBeVisible()
-    await page.getByRole('tab', { name: 'Tools', exact: true }).click()
+    await page.getByRole('tab', { name: '工具', exact: true }).click()
     await page.clock.runFor(400) // let the lazy reveal settle
-    await expect(page.getByText('AT console')).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'AT 控制台' })).toBeVisible()
     const reads = statusReads(agent)
     await page.clock.runFor(9000)
     await page.waitForTimeout(250)
@@ -341,11 +341,11 @@ test.describe('USB boot default and powerbank', () => {
   test('enabling NCM after boot asks first; Cancel sends nothing; Confirm sends one reviewed PUT', async ({ page, agent }) => {
     agent.on('PUT', '/api/usb/default', { data: { default_mode: 'ncm', ncm_persist_on_boot: true } })
     await openUsb(page)
-    const toggle = page.getByRole('switch', { name: 'NCM after boot' })
+    const toggle = page.getByRole('switch', { name: '开机后使用 NCM' })
     await toggle.click()
-    const dialog = page.getByRole('dialog', { name: 'Apply NCM after every boot?' })
+    const dialog = page.getByRole('dialog', { name: '每次开机后应用 NCM？' })
     await expect(dialog).toBeVisible()
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     expect(agent.mutations()).toEqual([])
 
     agent.on('GET', '/api/usb/status', { data: fx.usbStatus({ default_mode: 'ncm', ncm_persist_on_boot: true }) })
@@ -354,39 +354,39 @@ test.describe('USB boot default and powerbank', () => {
     await expect.poll(() => agent.mutations().length).toBe(1)
     expect(agent.mutations()[0].path).toBe('/api/usb/default')
     expect(agent.mutations()[0].body).toEqual({ mode: 'ncm', confirm_experimental: true })
-    await expect(page.getByText('Boot default', { exact: true }).locator('xpath=..')).toContainText('NCM')
-    await expect(page.getByText('Active mode', { exact: true }).locator('xpath=..')).toContainText('ECM')
+    await expect(page.getByText('开机默认', { exact: true }).locator('xpath=..')).toContainText('NCM')
+    await expect(page.getByText('当前模式', { exact: true }).locator('xpath=..')).toContainText('ECM')
   })
 })
 
 test.describe('Settings: theme', () => {
   test('the theme control is a named radio group', async ({ page }) => {
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    const group = page.getByRole('radiogroup', { name: 'Theme' })
-    await expect(group.getByRole('radio')).toHaveText(['Auto', 'Light', 'Dark'])
+    await openApp(page, { group: 'system', tab: '设置' })
+    const group = page.getByRole('radiogroup', { name: '主题' })
+    await expect(group.getByRole('radio')).toHaveText(['自动', '浅色', '深色'])
   })
 })
 
 test.describe('Tools: AT console', () => {
   test('the command and timeout fields have visible, associated labels', async ({ page, agent }) => {
-    await openApp(page, { group: 'system', tab: 'Tools' })
-    const command = page.getByRole('textbox', { name: 'AT command' })
+    await openApp(page, { group: 'system', tab: '工具' })
+    const command = page.getByRole('textbox', { name: 'AT 命令' })
     await expect(command).toBeVisible()
-    await expect(page.getByText('AT command', { exact: true })).toBeVisible()
-    await expect(page.getByLabel('Timeout (seconds)')).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'Timeout (seconds)' })).toHaveValue('2')
-    await page.getByText('AT command', { exact: true }).click()
+    await expect(page.getByText('AT 命令', { exact: true })).toBeVisible()
+    await expect(page.getByLabel('超时（秒）')).toBeVisible()
+    await expect(page.getByRole('combobox', { name: '超时（秒）' })).toHaveValue('2')
+    await page.getByText('AT 命令', { exact: true }).click()
     await expect(command).toBeFocused()
     expect(agent.mutations()).toEqual([])
   })
 
   test('typing and Enter send only the command and timeout the UI always sent', async ({ page, agent }) => {
     agent.on('POST', '/api/at/send', (req) => ({ data: fx.atSendResult((req.body as { command: string }).command) }))
-    await openApp(page, { group: 'system', tab: 'Tools' })
-    const command = page.getByRole('textbox', { name: 'AT command' })
+    await openApp(page, { group: 'system', tab: '工具' })
+    const command = page.getByRole('textbox', { name: 'AT 命令' })
     await command.fill('ATI')
     expect(agent.mutations()).toEqual([])
-    await page.getByRole('combobox', { name: 'Timeout (seconds)' }).selectOption('5')
+    await page.getByRole('combobox', { name: '超时（秒）' }).selectOption('5')
     expect(agent.mutations()).toEqual([])
     await command.press('Enter')
     await expect.poll(() => agent.mutations().length).toBe(1)
@@ -397,7 +397,7 @@ test.describe('Tools: AT console', () => {
 
   test('a failed AT port read is reported, not shown as "no port"', async ({ page, agent }) => {
     agent.fail('GET', '/api/at/port', { status: 500, error: 'synthetic failure' })
-    await openApp(page, { group: 'system', tab: 'Tools' })
+    await openApp(page, { group: 'system', tab: '工具' })
     await expect(page.getByText('AT port status could not be read.')).toBeVisible()
     await expect(page.getByText('No AT port detected.')).toHaveCount(0)
   })
@@ -409,9 +409,9 @@ test.describe('Touch targets (coarse pointer)', () => {
   test('USB radios, Apply and switches are at least 44 x 44 and do not overlap', async ({ page }) => {
     await openUsb(page)
     const targets = [
-      ...(await page.getByRole('radiogroup', { name: 'USB mode' }).getByRole('radio').all()),
-      page.getByRole('button', { name: 'Apply mode' }),
-      page.getByRole('switch', { name: 'NCM after boot' }),
+      ...(await page.getByRole('radiogroup', { name: 'USB 模式' }).getByRole('radio').all()),
+      page.getByRole('button', { name: '应用模式' }),
+      page.getByRole('switch', { name: '开机后使用 NCM' }),
     ]
     const boxes = []
     for (const t of targets) {
@@ -428,16 +428,16 @@ test.describe('Touch targets (coarse pointer)', () => {
 test.describe('Layout at 320 px', () => {
   test('Settings and Tools do not overflow horizontally and USB controls are not clipped', async ({ page }) => {
     await page.setViewportSize(VIEWPORTS.phone320)
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await expect(page.getByText('Active mode', { exact: true })).toBeVisible()
+    await openApp(page, { group: 'system', tab: '设置' })
+    await expect(page.getByText('当前模式', { exact: true })).toBeVisible()
     const overflow = () => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)
     expect(await overflow()).toBeLessThanOrEqual(0)
     for (const radio of await page.getByRole('radio').all()) {
       const box = await radio.boundingBox()
       expect(box!.x + box!.width).toBeLessThanOrEqual(320)
     }
-    await page.getByRole('tab', { name: 'Tools', exact: true }).click()
-    await expect(page.getByRole('textbox', { name: 'AT command' })).toBeVisible()
+    await page.getByRole('tab', { name: '工具', exact: true }).click()
+    await expect(page.getByRole('textbox', { name: 'AT 命令' })).toBeVisible()
     expect(await overflow()).toBeLessThanOrEqual(0)
   })
 })

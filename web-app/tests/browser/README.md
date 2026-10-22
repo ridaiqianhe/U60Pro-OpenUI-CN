@@ -38,7 +38,8 @@ Nothing in this suite can reach the router.
 
 1. The page is served from `127.0.0.1:$PW_PORT`, so the app's `API_BASE` is
    `http://127.0.0.1:9090`. Every request goes through one `context.route`:
-   - dev-server origin: passes through;
+   - same-origin `/cgi-bin/*`: answered by synthetic handlers, never forwarded;
+   - other dev-server resources: pass through;
    - `http://127.0.0.1:9090`: answered by the synthetic agent, never forwarded;
    - anything else (including `192.168.0.1`, fonts, analytics, other ports):
      aborted and recorded in `agent.blocked()`.
@@ -56,6 +57,18 @@ Nothing in this suite can reach the router.
 5. Fixtures are synthetic: placeholder identifiers, documentation address ranges
    (`192.0.2.0/24`, `2001:db8::/32`), `02:00:5E:...` MACs, invented SMS text.
    Never paste real IMEI/ICCID/IMSI/MSISDN/MAC/SMS content or SSIDs.
+
+## Chinese dashboard coverage
+
+Use the visible Chinese accessible names for navigation, tabs, fields and actions.
+Keep protocol values, API payloads, keyboard keys (`Home`, `End`) and stable data
+attributes unchanged. Match tab names exactly: 短信 and 短信转发 coexist.
+Mixed-language status messages are asserted as rendered by their source component.
+
+The harness also simulates QCI/AMBR, neighbor scans, SMS forwarding and the
+trusted-source login CGI. Its default login check returns 403; `login.spec.ts`
+covers password fallback, automatic login and explicit logout using synthetic tokens.
+No CGI request is allowed to fall through to Vite or a device.
 
 ## Writing a spec
 

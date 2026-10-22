@@ -9,8 +9,8 @@ import { openApp } from './support/app'
 
 async function openRebootDialog(page: Page, agent: MockAgent) {
   agent.on('POST', '/api/device/reboot', { data: {} })
-  await openApp(page, { group: 'system', tab: 'Settings' })
-  const reboot = page.getByRole('button', { name: 'Reboot', exact: true })
+  await openApp(page, { group: 'system', tab: '设置' })
+  const reboot = page.getByRole('button', { name: '重启设备', exact: true })
   await reboot.click()
   const dialog = page.getByRole('dialog', { name: 'Reboot the device?' })
   await expect(dialog).toBeVisible()
@@ -41,14 +41,14 @@ test.describe('confirm dialog', () => {
     })
     expect(wiring.title).toBe('Reboot the device?')
     expect(wiring.desc).toContain('connections will drop')
-    await expect(page.getByRole('button', { name: 'Cancel' })).toBeFocused()
+    await expect(page.getByRole('button', { name: '取消' })).toBeFocused()
     expect(agent.mutations()).toEqual([])
   })
 
   test('Tab and Shift+Tab cycle inside the dialog in both directions', async ({ page, agent }) => {
     const { dialog } = await openRebootDialog(page, agent)
-    const cancel = dialog.getByRole('button', { name: 'Cancel' })
-    const confirm = dialog.getByRole('button', { name: 'Reboot' })
+    const cancel = dialog.getByRole('button', { name: '取消' })
+    const confirm = dialog.getByRole('button', { name: '重启设备' })
     await expect(cancel).toBeFocused()
     const forward = [confirm, cancel, confirm, cancel]
     for (const next of forward) {
@@ -66,9 +66,9 @@ test.describe('confirm dialog', () => {
 
   test('background content is inert while open', async ({ page, agent }) => {
     await openRebootDialog(page, agent)
-    // The page behind the modal cannot be hit: a point over the "Shut down" button lands on the dialog's scrim.
+    // The page behind the modal cannot be hit: a point over the "关机" button lands on the dialog's scrim.
     const hit = await page.evaluate(() => {
-      const el = [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === 'Shut down')!
+      const el = [...document.querySelectorAll('button')].find((b) => b.textContent?.trim() === '关机')!
       const r = el.getBoundingClientRect()
       const top = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)
       return { onDialog: !!top?.closest('dialog'), hitBackground: top === el }
@@ -87,7 +87,7 @@ test.describe('confirm dialog', () => {
 
   test('Cancel resolves false and restores focus', async ({ page, agent }) => {
     const { reboot, dialog } = await openRebootDialog(page, agent)
-    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    await dialog.getByRole('button', { name: '取消' }).click()
     await expect(dialog).toBeHidden()
     await expect(reboot).toBeFocused()
     expect(agent.mutations()).toEqual([])
@@ -107,7 +107,7 @@ test.describe('confirm dialog', () => {
 
   test('double Confirm sends exactly one request', async ({ page, agent }) => {
     const { dialog } = await openRebootDialog(page, agent)
-    const confirm = dialog.getByRole('button', { name: 'Reboot' })
+    const confirm = dialog.getByRole('button', { name: '重启设备' })
     // Two synchronous clicks on the same element: the second must be a no-op.
     await confirm.evaluate((b: HTMLButtonElement) => {
       b.click()
@@ -140,8 +140,8 @@ test.describe('confirm dialog', () => {
         kind: 'connection',
         confirmLabel: 'Turn off',
         details: [
-          { label: 'Operation', value: 'Disable radio' },
-          { label: 'Radio', value: '5 GHz' },
+          { label: '操作', value: 'Disable radio' },
+          { label: '无线网络', value: '5 GHz' },
         ],
         consequence: 'Devices on this band will disconnect.',
         recovery: 'Reconnect to the 2.4 GHz network.',
@@ -149,7 +149,7 @@ test.describe('confirm dialog', () => {
     }, FEEDBACK_MODULE)
     const dialog = page.getByRole('dialog', { name: 'Turn off 5 GHz Wi-Fi?' })
     await expect(dialog).toBeVisible()
-    await expect(dialog.getByRole('button', { name: 'Cancel' })).toBeFocused()
+    await expect(dialog.getByRole('button', { name: '取消' })).toBeFocused()
     await expect(dialog.locator('dl')).toContainText('5 GHz')
     await expect(dialog).toContainText('Devices on this band will disconnect.')
     await expect(dialog).toContainText('Reconnect to the 2.4 GHz network.')
@@ -180,15 +180,15 @@ test.describe('confirm dialog', () => {
 test.describe('tabs', () => {
   test('tablist is named; one tab stop; tabs and panel are wired by ids', async ({ page }) => {
     await openApp(page, { group: 'network' })
-    const list = page.getByRole('tablist', { name: 'Network sections' })
+    const list = page.getByRole('tablist', { name: '网络分类' })
     await expect(list).toBeVisible()
     const tabs = list.getByRole('tab')
-    await expect(tabs).toHaveCount(3)
+    await expect(tabs).toHaveCount(4)
     await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true')
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'false')
     const stops = await tabs.evaluateAll((els) => els.map((e) => e.getAttribute('tabindex')))
-    expect(stops).toEqual(['0', '-1', '-1'])
-    const panel = page.getByRole('tabpanel', { name: 'Clients' })
+    expect(stops).toEqual(['0', '-1', '-1', '-1'])
+    const panel = page.getByRole('tabpanel', { name: '连接设备' })
     await expect(panel).toBeVisible()
     await expect(panel).toHaveAttribute('tabindex', '0')
     const wired = await tabs.nth(0).evaluate((t) => ({
@@ -203,8 +203,8 @@ test.describe('tabs', () => {
 
   test('arrows wrap and move focus only; Enter and Space activate; Home/End jump', async ({ page }) => {
     await openApp(page, { group: 'network' })
-    const list = page.getByRole('tablist', { name: 'Network sections' })
-    const [clients, wifi, router] = ['Clients', 'Wi-Fi', 'Router'].map((n) => list.getByRole('tab', { name: n }))
+    const list = page.getByRole('tablist', { name: '网络分类' })
+    const [clients, wifi, router, wireguard] = ['连接设备', 'Wi-Fi', '路由设置', 'WireGuard'].map((n) => list.getByRole('tab', { name: n }))
 
     await clients.focus()
     await page.keyboard.press('ArrowRight')
@@ -221,30 +221,34 @@ test.describe('tabs', () => {
 
     await page.keyboard.press('ArrowRight')
     await expect(router).toBeFocused()
+    await page.keyboard.press('ArrowRight')
+    await expect(wireguard).toBeFocused()
     await page.keyboard.press('ArrowRight') // wraps to the first
     await expect(clients).toBeFocused()
     await page.keyboard.press('ArrowLeft') // wraps to the last
-    await expect(router).toBeFocused()
+    await expect(wireguard).toBeFocused()
     await page.keyboard.press('Home')
     await expect(clients).toBeFocused()
     await page.keyboard.press('End')
+    await expect(wireguard).toBeFocused()
+    await page.keyboard.press('ArrowLeft')
     await expect(router).toBeFocused()
     await expect(wifi).toHaveAttribute('aria-selected', 'true') // still: nothing activated yet
     await page.keyboard.press('Space')
     await expect(router).toHaveAttribute('aria-selected', 'true')
-    await expect(page.getByRole('tabpanel', { name: 'Router' })).toBeVisible()
+    await expect(page.getByRole('tabpanel', { name: '路由设置' })).toBeVisible()
   })
 
   test('Tab leaves the strip and re-enters on the selected tab', async ({ page }) => {
     await openApp(page, { group: 'network' })
-    const list = page.getByRole('tablist', { name: 'Network sections' })
-    await list.getByRole('tab', { name: 'Clients' }).focus()
+    const list = page.getByRole('tablist', { name: '网络分类' })
+    await list.getByRole('tab', { name: '连接设备' }).focus()
     await page.keyboard.press('ArrowRight')
     await page.keyboard.press('Tab')
     // Out of the tablist (into the panel or beyond), never onto another tab.
     expect(await page.evaluate(() => document.activeElement?.getAttribute('role'))).not.toBe('tab')
     await page.keyboard.press('Shift+Tab')
-    await expect(list.getByRole('tab', { name: 'Clients' })).toBeFocused()
+    await expect(list.getByRole('tab', { name: '连接设备' })).toBeFocused()
   })
 })
 
@@ -317,14 +321,14 @@ async function expectVisibleFocus(page: Page, target: Locator) {
 for (const theme of ['light', 'dark'] as const) {
   test(`keyboard focus ring is visible on a filled button and a field (${theme})`, async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { data: {} })
-    await openApp(page, { group: 'system', tab: 'Settings', theme })
+    await openApp(page, { group: 'system', tab: '设置', theme })
     await page.keyboard.press('Tab') // switch the page to keyboard modality
-    await expectVisibleFocus(page, page.getByRole('button', { name: 'Reboot', exact: true })) // solid danger fill
+    await expectVisibleFocus(page, page.getByRole('button', { name: '重启设备', exact: true })) // solid danger fill
 
-    await page.getByRole('button', { name: 'Network', exact: true }).first().click()
-    await page.getByRole('tab', { name: 'Router' }).click()
+    await page.getByRole('button', { name: '网络', exact: true }).first().click()
+    await page.getByRole('tab', { name: '路由设置' }).click()
     await page.keyboard.press('Tab')
-    const field = page.getByLabel('LAN IP')
+    const field = page.getByLabel('局域网 IP')
     await expectVisibleFocus(page, field)
     expect(await field.evaluate((e) => getComputedStyle(e).outlineStyle)).not.toBe('none')
   })
@@ -345,22 +349,22 @@ test.describe('toast live regions', () => {
 
   test('errors go to the alert region, persist, and have a named dismiss button', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { error: 'synthetic reboot failure', status: 500 })
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await page.getByRole('button', { name: 'Reboot', exact: true }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Reboot' }).click()
+    await openApp(page, { group: 'system', tab: '设置' })
+    await page.getByRole('button', { name: '重启设备', exact: true }).click()
+    await page.getByRole('dialog').getByRole('button', { name: '重启设备' }).click()
     const toast = page.locator('[data-toast-region="assertive"]').getByText('synthetic reboot failure')
     await expect(toast).toBeVisible()
     await page.waitForTimeout(5600) // past the success-toast lifetime
     await expect(toast).toBeVisible()
-    await page.getByRole('button', { name: 'Dismiss notification' }).click()
+    await page.getByRole('button', { name: '关闭通知' }).click()
     await expect(toast).toBeHidden()
   })
 
   test('success goes to the polite region and clears itself', async ({ page, agent }) => {
     agent.on('POST', '/api/device/reboot', { data: {} })
-    await openApp(page, { group: 'system', tab: 'Settings' })
-    await page.getByRole('button', { name: 'Reboot', exact: true }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Reboot' }).click()
+    await openApp(page, { group: 'system', tab: '设置' })
+    await page.getByRole('button', { name: '重启设备', exact: true }).click()
+    await page.getByRole('dialog').getByRole('button', { name: '重启设备' }).click()
     const toast = page.locator('[data-toast-region="polite"]').getByText('Reboot command sent')
     await expect(toast).toBeVisible()
     await expect(toast).toBeHidden({ timeout: 8000 })
