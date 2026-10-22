@@ -19,3 +19,11 @@
 短信转发默认关闭，首次开启建立历史基线。Bark 地址、Webhook token、表单中的 key 等都是敏感数据。不要上传 `/data/plugins/` 的运行目录。每天流量查询和自动退订不包含在此发布版本中。
 
 已知限制：AMBR 日志尚未按 SIM 隔离；转发历史时间可能受设备本地时钟偏移影响；Mihomo 半关闭连接可能残留。依赖数据不完整时页面显示未知，不承诺所有固件适用。
+
+## 附近小区
+
+信号页新增“附近小区”标签，手动触发约 35 秒采集。安装
+`scripts/device/neighbor-scan/` 到 `/data/plugins/neighbor-scan`，按其中 README
+安装并校验官方离线解析器；将 `neighbor-scan.cgi` 放入面板的
+`cgi-bin/neighbor-scan` 并赋可执行权限。不安装 datad HTTP 服务，不添加开机钩子。
+运行结果和原始诊断文件不包含在仓库，临时原始文件采集后清理。

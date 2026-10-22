@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { TabPanel, Tabs } from '../../ui/Tabs'
 import Overview from './Overview'
 import Locking from './Locking'
+import Neighbors from './Neighbors'
 
-type Tab = 'overview' | 'locking'
+type Tab = 'overview' | 'locking' | 'neighbors'
 
 export default function SignalGroup() {
   const [tab, setTab] = useState<Tab>('overview')
@@ -19,6 +20,7 @@ export default function SignalGroup() {
         tabs={[
           { id: 'overview', label: "概览" },
           { id: 'locking', label: "模式与锁定" },
+          { id: 'neighbors', label: "附近小区" },
         ]}
         active={tab}
         onChange={setTab}
@@ -27,7 +29,7 @@ export default function SignalGroup() {
       />
 
       <TabPanel idBase="signal" id={tab} className="space-y-4">
-        {tab === 'overview' ? <Overview /> : <Locking />}
+        {tab === 'overview' ? <Overview /> : tab === 'neighbors' ? <Neighbors /> : <Locking />}
       </TabPanel>
     </div>
   )
