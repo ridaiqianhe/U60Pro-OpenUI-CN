@@ -27,7 +27,11 @@ fi
   .tun = {"enable":true,"device":"mihomo0","stack":"gvisor","auto-route":true,"auto-redirect":true,"auto-detect-interface":true,"mtu":1500,"dns-hijack":["any:53","tcp://any:53"],"route-exclude-address":["10.0.0.0/8","172.16.0.0/12","192.168.0.0/16","fc00::/7","fe80::/10"]}
 ' "$target"
 "$base/yq" -i '.secret style="double"' "$target"
-# Only relocate the DNS socket; policy and upstreams follow the subscription.
+# Apply the explicitly enabled device DNS policy after importing subscription settings.
+if [ -f "$base/dns-split.enabled" ]; then
+    sh "$base/apply-dns.sh" "$target"
+fi
+# Otherwise DNS policy and upstreams follow the subscription.
 if [ "$("$base/yq" '.dns.enable' "$target")" = true ]; then
     "$base/yq" -i '.dns.listen = "127.0.0.1:1053"' "$target"
 else

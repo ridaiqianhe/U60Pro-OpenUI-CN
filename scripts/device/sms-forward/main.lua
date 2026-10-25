@@ -258,7 +258,17 @@ local function cgi()
  if not ok then response(value=='busy' and '409 Conflict' or '400 Bad Request',nil,value=='busy' and '转发任务正忙，请稍后再试' or '操作失败：请检查配置；编辑或移除前先停用该通道，并处理其待发送消息（最多 12 路）') else response('200 OK',value) end
 end
 if arg[1]=='worker' then
- while true do lock(tick);nixio.nanosleep(5) end
+ local daily_file=io.open(base..'/daily-query.lua','r')
+ local daily
+ if daily_file then daily_file:close();daily=dofile(base..'/daily-query.lua') end
+ local traffic_file=io.open('/data/plugins/traffic-query/main.lua','r')
+ local traffic
+ if traffic_file then traffic_file:close();traffic=dofile('/data/plugins/traffic-query/main.lua')end
+ while true do
+  if traffic then pcall(traffic.tick) end
+  if daily then pcall(daily.tick) end
+  lock(tick);nixio.nanosleep(5)
+ end
 elseif arg[1]=='cgi' then cgi()
 elseif arg[1]=='tick' then assert(lock(tick))
 elseif arg[1]=='selftest' then assert(formbody('key=x&x\nmsg={{content}}',{content='你好 &+=\n'})=='key=x%26x&msg=%E4%BD%A0%E5%A5%BD%20%26%2B%3D%0A');assert(decode('4F60597D')=='你好');assert(sender('106900001234')=='106900001234');assert(decode('D83DDE00')=='😀');print('unicode and sender tests passed')

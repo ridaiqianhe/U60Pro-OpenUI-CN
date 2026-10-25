@@ -10,11 +10,12 @@ access() {
  if [ -z "$address" ]; then address=$(cat "$base/access.address" 2>/dev/null || true); fi
  if [ "$action" = -I ]; then
   [ -n "$address" ] || return 0
-  iptables -C INPUT -i "$iface" -p tcp -m multiport --dports 2222,8080,9090,9091 -j ACCEPT 2>/dev/null || iptables -I INPUT -i "$iface" -p tcp -m multiport --dports 2222,8080,9090,9091 -j ACCEPT
+  while iptables -D INPUT -i "$iface" -p tcp -m multiport --dports 2222,8080,9090,9091 -j ACCEPT 2>/dev/null; do :; done
+  iptables -C INPUT -i "$iface" -p tcp -m multiport --dports 80,2222,8080,9090,9091 -j ACCEPT 2>/dev/null || iptables -I INPUT -i "$iface" -p tcp -m multiport --dports 80,2222,8080,9090,9091 -j ACCEPT
   iptables -t nat -C PREROUTING -i "$iface" -d "$address" -p tcp -m multiport --dports 9090,9091 -j DNAT --to-destination 192.168.0.1 2>/dev/null || iptables -t nat -I PREROUTING -i "$iface" -d "$address" -p tcp -m multiport --dports 9090,9091 -j DNAT --to-destination 192.168.0.1
   printf '%s' "$address" > "$base/access.address"
  else
-  while iptables -D INPUT -i "$iface" -p tcp -m multiport --dports 2222,8080,9090,9091 -j ACCEPT 2>/dev/null; do :; done
+  while iptables -D INPUT -i "$iface" -p tcp -m multiport --dports 80,2222,8080,9090,9091 -j ACCEPT 2>/dev/null; do :; done
   if [ -n "$address" ]; then
    while iptables -t nat -D PREROUTING -i "$iface" -d "$address" -p tcp -m multiport --dports 9090,9091 -j DNAT --to-destination 192.168.0.1 2>/dev/null; do :; done
   fi

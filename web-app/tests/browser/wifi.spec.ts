@@ -136,7 +136,7 @@ test.describe('TX power (R09)', () => {
 test.describe('confirmations before connection-dropping changes (R11)', () => {
   test('Cancel on the Wi-Fi-off confirmation sends nothing; Confirm sends exactly one reviewed PUT', async ({ page, agent }) => {
     await openWifi(page, agent)
-    const master = page.getByRole('switch', { name: 'Wi-Fi 总开关' })
+    const master = page.getByRole('switch', { name: 'Wi-Fi 总开关', exact: true })
     await master.click()
     const dialog = page.getByRole('dialog', { name: 'Turn off all Wi-Fi?' })
     await expect(dialog).toContainText('possibly this browser')
@@ -157,7 +157,7 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
   test('after acknowledgement the page says "applied, verifying" until the read-back arrives', async ({ page, agent }) => {
     await openWifi(page, agent)
     const held = agent.defer('GET', STATUS)
-    await page.getByRole('switch', { name: 'Wi-Fi 总开关' }).click()
+    await page.getByRole('switch', { name: 'Wi-Fi 总开关', exact: true }).click()
     await page.getByRole('dialog').getByRole('button', { name: 'Turn off Wi-Fi' }).click()
     await held.waitForRequest()
     await expect(page.getByText(/Wi-Fi 总开关: applied\..*Verifying/)).toBeVisible()
@@ -169,7 +169,7 @@ test.describe('confirmations before connection-dropping changes (R11)', () => {
 
   test('turning Wi-Fi back on needs no confirmation', async ({ page, agent }) => {
     await openWifi(page, agent, { wifi_onoff: '0' })
-    await page.getByRole('switch', { name: 'Wi-Fi 总开关' }).click()
+    await page.getByRole('switch', { name: 'Wi-Fi 总开关', exact: true }).click()
     await expect.poll(() => agent.mutations().length).toBe(1)
     expect(agent.mutations()[0].body).toEqual({ wifi_onoff: '1' })
     await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -374,7 +374,7 @@ test.describe('touch (U06) at 375 px', () => {
     await openWifi(page, agent)
     await edit(page, '2.4 GHz')
     const targets = [
-      page.getByRole('switch', { name: 'Wi-Fi 总开关' }),
+      page.getByRole('switch', { name: 'Wi-Fi 总开关', exact: true }),
       page.getByRole('switch', { name: '5 GHz radio' }),
       page.getByRole('switch', { name: '隐藏 SSID' }),
       page.getByRole('button', { name: 'Edit 5 GHz settings' }),

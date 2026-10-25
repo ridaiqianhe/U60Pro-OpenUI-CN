@@ -1,3 +1,4 @@
+import TrafficQuery from './TrafficQuery'
 import { useState, type ReactNode } from 'react'
 import { useHome } from '../../app/HomeContext'
 import { api } from '../../data/api'
@@ -130,6 +131,7 @@ export default function DataTab() {
 
   return (
     <div className="space-y-3">
+      <TrafficQuery onApplied={home.refresh} />
       {home.status === 'stale' && (
         <InlineStatus kind="stale" action={{ label: "重试", onClick: home.refresh, loading: home.refreshing }}>
           Showing the last usage the router reported. The latest refresh failed.

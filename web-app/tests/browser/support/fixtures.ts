@@ -572,3 +572,12 @@ export const killBloatResult = (over?: Json): Json =>
 
 export const atSendResult = (command = 'AT', over?: Json): Json =>
   merge({ command, response: `${command}\r\nOK`, port: '/dev/at_mdm0', elapsed_ms: 42 }, over)
+
+export function guestWifi() {
+  const band = { ssid: 'Synthetic Guest', enabled: true, radio_enabled: true, broadcast: true, encryption: 'psk2+ccmp', password_set: true, pmf: false, qr: true, isolate: false, max_clients: 32, duration_hours: 4, remaining_seconds: 7200, running: true, clients: 0 }
+  return { bands: { '2g': { ...band, radio_enabled: false, running: false }, '5g': { ...band } }, sync_enabled: false, lan_access: false, duration_options: [0, 2, 4, 8, 12, 24], security_options: ['none', 'psk2+ccmp', 'psk-mixed+tkip+ccmp', 'sae-mixed', 'sae'] }
+}
+
+export function trafficQuery() {
+  return { auto_sync: true, carrier: 'cmcc', carrier_name: '中国移动', status: 'ready', official: { enabled: false, total_bytes: 100 * 1024 ** 3, used_bytes: 20 * 1024 ** 3, auto_disconnect: false } }
+}

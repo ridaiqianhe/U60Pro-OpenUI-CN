@@ -252,6 +252,8 @@ export function registerDefaults(agent: MockAgent) {
   const get = (path: string, data: unknown | (() => unknown)) =>
     agent.on('GET', path, () => ok(typeof data === 'function' ? (data as () => unknown)() : data))
   // Extensions are simulated at the same origin; no CGI can fall through to a real service.
+  get('/cgi-bin/traffic-query', () => fx.trafficQuery())
+  get('/cgi-bin/guest-wifi', () => fx.guestWifi())
   get('/cgi-bin/home-qci', { qci: 9, ambr_dl_mbps: 1000, ambr_ul_mbps: 100, connections: 12 })
   get('/cgi-bin/neighbor-scan', { status: 'idle', cells: [] })
   get('/cgi-bin/sms-forward', { schema: 2, enabled: false, cleanup_enabled: false, channels: [], pending: 0, history: [] })

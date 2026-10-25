@@ -1,3 +1,4 @@
+import GuestWifi from './GuestWifi'
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { api } from '../../data/api'
 import { useResource } from '../../data/poll'
@@ -457,13 +458,7 @@ export default function WifiTab() {
         <BandCard label="5 GHz" other="2.4 GHz" band={data.band_5g} suffix="5g" masterEnabled={data.master_enabled} locked={pending} apply={apply} />
       </div>
 
-      {data.guest_ssid && (
-        <Card title="访客网络">
-          <p className="break-words text-body text-ink2">
-            SSID: <span className="font-semibold text-ink">{data.guest_ssid}</span>
-          </p>
-        </Card>
-      )}
+      <GuestWifi blocked={pending} acquire={() => { if (lock.current) return false; lock.current = true; setPending(true); return true }} release={() => { lock.current = false; setPending(false) }} />
     </div>
   )
 }
