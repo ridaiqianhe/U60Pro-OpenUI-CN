@@ -1,5 +1,7 @@
 # Deployment — unlock, install, update
 
+中文入门：[U60 Pro 开启 ADB 与 SSH](ADB_SSH.zh-CN.md)。
+
 Everything needed to go from a locked U60 Pro to the full stack (agent +
 dashboard + SSH), and to keep it there. Read [SAFETY.md](SAFETY.md) first.
 
