@@ -109,6 +109,12 @@ export async function confirmLan(ip: string, confirmationToken: string) {
   return req('POST', '/api/router/lan/confirm', { token: confirmationToken }, undefined, 3000, `http://${ip}:9090`, false)
 }
 
+// A VPN or USB forwarding address can remain reachable while the LAN changes.
+// The backend verifies both the one-use nonce and the applied configuration.
+export async function confirmLanViaCurrentAddress(confirmationToken: string) {
+  return req('POST', '/api/router/lan/confirm', { token: confirmationToken }, undefined, 3000, API_BASE, false)
+}
+
 export async function readCsv(path: string): Promise<{ csv: string }> {
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), 30_000)

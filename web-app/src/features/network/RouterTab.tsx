@@ -1,6 +1,6 @@
 import { useId, useState } from 'react'
 import { api } from '../../data/api'
-import { confirmLan } from '../../data/client'
+import { confirmLan, confirmLanViaCurrentAddress } from '../../data/client'
 import { useResource, type PollResult } from '../../data/poll'
 import type { DnsConfig, LanConfig } from '../../types'
 import { Button, Field, Input, Toggle } from '../../ui/controls'
@@ -155,8 +155,8 @@ function LanSection() {
     setBusy(true)
     const ok = await confirm({
       kind: 'connection',
-      title: moves ? `Move the router to ${frozen.ipaddr}?` : 'Apply LAN settings?',
-      body: 'The router restarts its LAN and DHCP service to apply this.',
+      title: moves ? `将路由器地址改为 ${frozen.ipaddr}？` : '应用局域网设置？',
+      body: '设备将应用局域网和 DHCP 设置。请保持页面打开，等待连接确认，期间不要重启。',
       details: [
         { label: "路由器地址", value: before && before.ipaddr !== frozen.ipaddr ? `${before.ipaddr} → ${frozen.ipaddr}` : frozen.ipaddr },
         { label: "子网掩码", value: frozen.netmask },
@@ -165,7 +165,7 @@ function LanSection() {
       consequence: moves
         ? 'Every device on Wi-Fi and USB-C briefly loses its LAN connection, including this dashboard, which moves to the new address. Mobile data is not changed.'
         : 'Connected devices may briefly lose their LAN connection and renew their addresses. Mobile data is not changed.',
-      recovery: 'If the new address cannot be confirmed within about two minutes, the previous LAN settings return automatically.',
+      recovery: '必须等到显示“局域网设置已保存并确认”后再重启。两分钟内未确认，或确认前重启，都会恢复原设置。',
     })
     if (!ok) {
       setBusy(false)
@@ -180,33 +180,43 @@ function LanSection() {
         dhcp_end: frozen.dhcp_end,
         lease_seconds: frozen.lease_seconds,
       })
+      if (typeof result.changed !== 'boolean') {
+        throw new Error('设备没有返回局域网确认状态，无法确认是否保存。请刷新检查配置，并核对前端与设备服务的版本。')
+      }
       if (result.changed) {
         if (result.reconnect_ip !== frozen.ipaddr || typeof result.confirmation_token !== 'string') {
           throw new Error('Invalid LAN transition response; previous settings will be restored automatically')
         }
-        setTransition(`Reconnecting to ${frozen.ipaddr}. Rejoin Wi-Fi if needed. Previous settings return automatically if confirmation fails.`)
+        setTransition(`正在确认 ${frozen.ipaddr} 的设置，请勿重启或关闭页面。连接中断时请重新连接 Wi-Fi；确认失败会自动恢复原设置。`)
         const deadline = Date.now() + 90_000
         let confirmed = false
         while (Date.now() < deadline) {
           await new Promise(resolve => setTimeout(resolve, 2000))
           try {
-            await confirmLan(frozen.ipaddr, result.confirmation_token)
+            try {
+              await confirmLanViaCurrentAddress(result.confirmation_token)
+            } catch {
+              await confirmLan(frozen.ipaddr, result.confirmation_token)
+            }
             confirmed = true
             break
           } catch { /* The address may still be changing; retry within the recovery window. */ }
         }
         if (!confirmed) {
-          throw new Error('Could not confirm the new address. Wait up to two minutes from Apply for the previous LAN settings to return, then reconnect.')
+          throw new Error('未能确认新设置。设备将在应用后的两分钟内恢复原设置，请重新连接后刷新查看。')
         }
-        setTransition('LAN settings confirmed. Opening the dashboard at its new address…')
-        if (window.location.hostname !== frozen.ipaddr) {
+        setTransition('局域网设置已保存并确认，现在可以重启。')
+        // Preserve a working VPN/USB forwarding entry point. Only relocate a
+        // dashboard that was reached directly through the previous LAN IP.
+        if (before && window.location.hostname === before.ipaddr && before.ipaddr !== frozen.ipaddr) {
           const next = new URL(window.location.href)
           next.hostname = frozen.ipaddr
           // Session storage belongs to the old origin; sign in again at the new address.
           window.location.assign(next.toString())
         }
       }
-      toast('LAN settings saved and confirmed')
+      setTransition('局域网设置已保存并确认，现在可以重启。')
+      toast('局域网设置已保存并确认')
       try {
         resource.mutate(await api.lanGet())
         setDraft(null)
@@ -232,7 +242,10 @@ function LanSection() {
   return (
     <Card title="局域网 / DHCP">
       <BaselineStatus what="LAN settings" resource={resource} />
-      <p className="mb-3 text-xs text-ink3" role="status">{transition || 'Changes must reconnect and confirm within two minutes; otherwise the previous settings are restored.'}</p>
+      <p className="mb-3 text-xs text-ink3" role="status">{transition || (resource.data?.transition?.pending
+        ? '局域网设置尚未确认，请勿重启。请返回发起修改的页面完成确认；超时会恢复原设置。'
+        : '应用后请等待“已保存并确认”再重启；确认前重启或两分钟内未确认会恢复原设置。')}</p>
+      {resource.data?.transition?.last_error && <InlineStatus kind="error" className="mb-3">上次局域网修改未完成：{resource.data.transition.last_error}</InlineStatus>}
       <div className="grid grid-cols-1 gap-2.5 lg:grid-cols-2">
         <Field label="局域网 IP">
           <Input disabled={!known} value={lan.ipaddr} onChange={(e) => edit({ ipaddr: e.target.value })} inputMode="numeric" />
@@ -246,7 +259,7 @@ function LanSection() {
         <Field label="DHCP 结束地址">
           <Input disabled={!known || !lan.dhcp_enabled} value={lan.dhcp_end} onChange={(e) => edit({ dhcp_end: e.target.value })} inputMode="numeric" />
         </Field>
-        <Field label="租期（小时）" hint="The firmware stores this value in seconds.">
+        <Field label="租期（小时）" hint="界面按小时填写，保存时自动换算为秒。">
           <Input
             type="number"
             min={1}
@@ -266,7 +279,7 @@ function LanSection() {
         <Toggle checked={lan.dhcp_enabled} disabled={!known} onChange={(dhcp_enabled) => edit({ dhcp_enabled })} labelledBy={dhcpId} />
       </div>
       <div className="mt-3.5">
-        <Button variant="primary" onClick={save} loading={busy} disabled={!known}>
+        <Button variant="primary" onClick={save} loading={busy} disabled={!known || resource.data?.transition?.pending === true}>
           应用局域网设置
         </Button>
       </div>

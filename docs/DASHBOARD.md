@@ -24,6 +24,20 @@ flows, calls/USSD/STK) were removed rather than left dangling. See
 [AGENT.md](AGENT.md) for the route table, and
 `scripts/check-api-contract.py`, which fails if the two drift apart.
 
+## LAN changes and restart confirmation
+
+LAN/DHCP changes are tentative until the agent confirms the applied settings.
+Keep the page open until it reports that settings are saved and confirmed;
+restarting before confirmation restores the previous configuration, as does
+the two-minute timeout. A manual reboot is not required to apply the settings.
+
+The dashboard first confirms through its current API address, so an existing
+VPN or USB-forwarded connection can be used. If that fails, it tries the new
+LAN IP. Only the single-use confirmation nonce is sent on these requests.
+A directly connected dashboard moves from the old LAN IP to the new one;
+VPN/forwarded entry points stay unchanged. Pending transitions and the agent's
+last transition error are displayed instead of being discarded by the mapper.
+
 ## Source layout
 
 ```

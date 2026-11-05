@@ -233,6 +233,7 @@ export interface LanConfig {
   dhcp_start: string
   dhcp_end: string
   lease_seconds: number
+  transition?: { pending: boolean; last_error?: string; remaining_secs?: number }
 }
 
 export interface ModemCapabilities {

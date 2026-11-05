@@ -573,6 +573,7 @@ function mapLan(d: Record<string, unknown>): LanConfig {
     dhcp_start: (d.dhcp_start as string) || '',
     dhcp_end: (d.dhcp_end as string) || '',
     lease_seconds: Number(d.lease_seconds) || 0,
+    transition: d.transition as LanConfig['transition'],
   }
 }
 

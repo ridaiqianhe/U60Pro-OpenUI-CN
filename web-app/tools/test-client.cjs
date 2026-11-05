@@ -36,3 +36,10 @@ test('LAN confirmation rejects URLs and addresses outside private IPv4 space', a
   }
   assert.equal(requests.length, 0)
 })
+test('LAN confirmation can use the existing transport without the session secret', async () => {
+  const { client, requests } = fixture()
+  await client.confirmLanViaCurrentAddress('single-use-nonce')
+  assert.equal(requests[0].url, 'http://192.168.0.1:9090/api/router/lan/confirm')
+  assert.equal(requests[0].options.headers.Authorization, undefined)
+  assert.equal(JSON.parse(requests[0].options.body).token, 'single-use-nonce')
+})
