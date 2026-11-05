@@ -28,6 +28,7 @@ export function Tabs<T extends string>({
   onChange,
   label,
   idBase,
+  wrap = false,
 }: {
   tabs: TabDef<T>[]
   active: T
@@ -35,6 +36,8 @@ export function Tabs<T extends string>({
   /** Accessible name of the tablist. */
   label?: string
   idBase?: string
+  /** Wrap long network menus rather than placing controls outside a narrow viewport. */
+  wrap?: boolean
 }) {
   const generated = useId()
   const base = idBase ?? generated
@@ -64,7 +67,7 @@ export function Tabs<T extends string>({
 
   return (
     <div
-      className="no-scrollbar flex gap-5 overflow-x-auto border-b border-line/8"
+      className={`flex gap-x-5 border-b border-line/8 ${wrap ? 'flex-wrap gap-y-2' : 'no-scrollbar overflow-x-auto'}`}
       role="tablist"
       aria-label={label}
       onKeyDown={onKeyDown}

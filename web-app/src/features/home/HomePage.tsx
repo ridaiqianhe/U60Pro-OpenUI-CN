@@ -15,6 +15,7 @@ import {
 import type { BatteryInfo } from '../../types'
 import { zhStatus } from '../../ui/zhStatus'
 import MihomoCard from './MihomoCard'
+import LineField from './LineField'
 
 function PageSkeleton() {
   return (
@@ -53,10 +54,15 @@ export default function HomePage({ onOpenClash }: { onOpenClash: () => void }) {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="hidden font-display text-2xl font-semibold tracking-[-0.015em] text-ink lg:block">概览</h1>
-        <p className="lg:mt-0.5 text-body text-ink2">{zhStatus(signal?.carrier ?? '移动网络状态')}</p>
-      </div>
+      <header className="overview-intro">
+        <div className="overview-copy">
+          <p className="label">U60 PRO / NETWORK OBSERVATORY</p>
+          <h1 className="overview-title">连接的形状<span>概览。</span></h1>
+          <p className="text-body text-ink2">{zhStatus(signal?.carrier ?? '移动网络状态')}<span className="overview-divider" aria-hidden="true" />信号、流量与设备，尽在此处。</p>
+          <div className="overview-index" aria-hidden="true"><span>MU5250</span><span>LIVE READOUT ↓</span></div>
+        </div>
+        <LineField />
+      </header>
 
       {error && !data && (
         <Card>
@@ -65,7 +71,7 @@ export default function HomePage({ onOpenClash }: { onOpenClash: () => void }) {
       )}
 
       {/* Readout band — the page's one graphite beat. Hairline grid via gap-px on a line-tinted ground. */}
-      <section className="band overflow-hidden rounded-panel border border-line/10" aria-label="实时状态">
+      <section className="band readout-band overflow-hidden rounded-panel border border-line/10" aria-label="实时状态">
         <div className="grid grid-cols-6 gap-px bg-line/10 sm:grid-cols-8 xl:grid-cols-6">
           <div className="col-span-6 bg-band p-4 sm:col-span-8 xl:col-span-2">
             <div className="flex items-start justify-between gap-3">

@@ -12,42 +12,42 @@ file; change the system here first, never per screen. Tokens live in
 - **Tone:** technical — an instrument panel, calm and precise. Not a marketing page.
 
 ## Genre and theme
-- Genre: **modern-minimal**. Theme: **Cobalt**, adapted for an app (no reveals, no code hero, no ⌘K palette).
+- Genre: **technical editorial**. Theme: **Quantized Line Field**, adapted from https://www.stylekit.top/zh/styles/quantized-line-field for a real device dashboard. Use original radio-wave line geometry, not the reference brand cards.
 - One light theme and one graphite dark theme; both follow the OS by default (Auto / Light / Dark in System → Settings).
 
 ## Macrostructure (app pages)
-- **Readout band + panels.** Home opens with one graphite *readout band* (the page's single dark beat in light mode): large mono readouts separated by hairlines. Everything else is hairline-bordered panels on cool paper.
+- **Readout band + panels.** Home opens with one graphite *readout band* (the page's single dark beat in light mode): large mono readouts separated by hairlines. Everything else is hairline-bordered panels on warm paper with crisp plate edges.
 - Group pages: title (desktop only — the phone header already names the group), one-line subtitle, underline tabs, then panels.
 - Tables collapse to stacked rows below `sm`. Nothing scrolls sideways on a phone.
 
 ## Colour
-All values are OKLCH, stored as sRGB channels for Tailwind's `<alpha-value>`.
+Colours are stored as sRGB channels for Tailwind's `<alpha-value>`.
 
 | Token | Light | Dark | Role |
 |---|---|---|---|
-| `--bg` | oklch(97% .005 250) | oklch(16.5% .012 260) | page paper |
-| `--surface` | oklch(99.3% .002 250) | oklch(20% .014 260) | panels |
-| `--surface-2` | oklch(95.2% .006 252) | oklch(24.5% .016 260) | wells, hovers, tracks |
-| `--line` | ink | oklch(93% .01 255) | hairlines, used at /6–/15 |
-| `--text` | oklch(24% .02 258) | oklch(94% .008 255) | ink |
-| `--text-2` | oklch(42% .018 257) | oklch(76% .014 257) | secondary |
-| `--text-3` | oklch(52% .014 257) | oklch(64% .014 257) | labels, meta (≥ 5:1) |
-| `--accent` | oklch(55% .20 258) | oklch(70% .16 256) | the one cobalt signal; LTE |
-| `--nr` | oklch(52% .20 305) | oklch(72% .15 305) | 5G NR only |
-| `--ok` / `--warn` / `--danger` | status, never decoration |
-| `--band*` | graphite readout band + its ink and accent |
+| `--bg` | #fafaf8 | #111212 | page paper |
+| `--surface` | #fafaf8 | #191a19 | panels |
+| `--surface-2` | #eeeeeb | #252725 | wells and flat plates |
+| `--line` / `--text` | #202220 | #f3f3ed | ink / hairlines |
+| `--text-2` | #4b504b | #bec1b9 | secondary |
+| `--text-3` | #646862 | #9b9f97 | labels |
+| `--accent` | #2152e7 | #91bfff | electric blue / focus |
+| `--nr` | purple | light purple | NR only |
+| `--ok` / `--warn` / `--danger` | status | status | never decoration |
+| `--band*` | #111212 / light ink | #202220 / light ink | readout band |
 
-Rules: accent covers < 5 % of any view — active nav, primary button, focus ring, LTE marks. No gradients, glass, glows or drop shadows beyond `shadow-sm` on the active segmented option. Pure `#fff` / `#000` are banned.
+
+Rules: accent covers < 15 % of any view — active nav, primary button, focus ring, LTE marks. No gradients, glass, blur, glows or broad shadows. Layered cards use a 1 px offset plate edge rather than a blurred shadow. Pure `#fff` / `#000` are banned.
 
 ## Typography
-- **Display:** Space Grotesk (variable, Latin subset, self-hosted) — page titles, panel titles, readout units. Weight 600, tracking −0.01em. Always roman.
+- **Display:** Georgia / Times / local Chinese serif for editorial page headings; panel titles and measurements retain the compact display face. No remote font requests.
 - **Body:** system UI stack — zero bytes, native on every phone.
 - **Mono:** JetBrains Mono (variable, Latin subset, self-hosted) — every measured value (dBm, Mbps, %, GB), identifiers (IP, MAC, PCI, ARFCN), and *labels*.
 - **Labels:** mono, UPPERCASE, 11 px, `0.06em` tracking, `--text-3` — the machine-readout voice. Only on metric/field/table-column labels, never above section headings.
 - **Scale:** `caption` 11 px · `meta` 12 px · `body` 13 px · `sm` 14 px · `xl`/`2xl`/`4xl` for titles and readouts. No arbitrary pixel sizes; nothing below 11 px.
 
 ## Shape and space
-- Radii: panels 10 px (`rounded-panel`), controls 6 px (`rounded-ctl`), chips 4 px (`rounded-chip`).
+- Radii: panels 17 px (`rounded-panel`), controls 6 px (`rounded-ctl`), chips 4 px (`rounded-chip`).
 - Hairlines do the work: 1 px `line/8` borders; dividers `line/6`.
 - Spacing: Tailwind's 4-pt scale; panels `p-4`, gaps `3`.
 
@@ -58,7 +58,7 @@ Rules: accent covers < 5 % of any view — active nav, primary button, focus rin
 - Clickable labels never wrap (`whitespace-nowrap`).
 
 ## Motion and microinteractions
-- No entrance or scroll animation. Colour transitions only (`transition-colors`), meters animate width.
+- No entrance or scroll animation. Cards use a thin offset plate, with a 1 px fine-pointer hover lift. The original radio line field is static by default; its named opt-in button enables at most 20 painted frames per second, only in view and with the page visible. Reduced-motion always stays static.
 - Focus ring: see § Focus. Instant, never animated.
 - Toasts only for async device actions whose effect isn't visible; confirms only for irreversible or connection-dropping actions (see § Feedback and § Dialogs).
 - Respect `prefers-reduced-motion`: spinners and meters stop animating.
@@ -70,17 +70,20 @@ One treatment for every focusable element, set once in `src/index.css` (`:focus-
 - Inside `.band` the tokens are re-scoped, so the ring becomes `--band-accent` automatically. Do not hard-code a ring colour.
 - Compound controls (switch) draw the ring on the visible track, not on the larger touch hit area.
 
-Contrast of the ring against what it touches (WCAG relative luminance of the stored sRGB channels; need ≥ 3:1):
+Focus colours must retain at least 3:1 against the warm paper, panel, well and
+readout backgrounds. The gap around a filled control exposes the surrounding
+surface. Text and icon labels remain at least 4.5:1 where used as body copy.
 
-| Ring on | Light | Dark |
-|---|---|---|
-| `--bg` | 4.55 | 7.17 |
-| `--surface` | 4.88 | 6.74 |
-| `--surface-2` | 4.31 | 6.01 |
-| graphite readout band (`--band-accent` on `--band`) | 6.42 | 5.94 |
-| filled accent / danger button (ring sits in the 2 px gap on the parent surface; against the fill itself 1.0 / 1.07 light, 1.0 / 1.06 dark) | via gap | via gap |
+## Line-field hero
 
-The old 55 %-opacity ring measured 2.2–2.9:1 and is gone. `--text` as ring colour was rejected: 2.25:1 against the dark accent button and 1.05:1 on the light-mode band.
+Home begins with an editorial overview heading and one original radio-wave canvas
+study. It uses 60 columns, 30 segments per column and exactly four quantized line
+widths. Decorative geometry does not encode device telemetry and is aria-hidden;
+all actual signal readings remain in the existing real-time band. No image or
+external SVG stands in for the line field. Resize/DPR/theme changes repaint a
+single static frame when stopped; no idle requestAnimationFrame loop is allowed.
+The static drawing uses fixed original geometry and opt-in drift is deterministic.
+The hero adapts to one column on phones, with no horizontal overflow.
 
 ## Touch targets
 Under `(pointer: coarse)` every interactive control has a hit area of **≥ 44 × 44 CSS px** (Tailwind variant `coarse:`): buttons (both sizes), tabs, segmented items, toggle chips, switches, nav items, icon-only buttons, toast/alert dismiss. Fine pointers keep the compact sizes (button 32/36 px, switch 24 × 40).
@@ -130,4 +133,4 @@ Under `(pointer: coarse)` every interactive control has a hit area of **≥ 44 �
 - Raw readings keep the firmware's value and units; a rating never alters or hides one.
 
 ## What every screen must share
-The mark, the three faces, the token palette, the 10/6/4 radii, underline tabs, mono labels, and the rule that numbers are mono.
+The mark, the three faces, the token palette, the 17/6/4 radii, underline tabs, mono labels, and the rule that numbers are mono.

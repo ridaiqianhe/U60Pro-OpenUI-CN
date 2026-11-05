@@ -31,6 +31,11 @@ jobs:
       - run: cargo clippy -p zte-agent -p process-runner --all-targets --locked -- -D warnings
       - run: python3 -m unittest discover -s tests -v
       - run: python3 scripts/check-api-contract.py
+      - name: Check isolated Tailscale Lua handlers
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y lua5.1
+          lua5.1 scripts/device/tailscale/test.lua scripts/device/tailscale/config.lua scripts/device/tailscale/main.lua
       - run: python3 scripts/check-device-secrets.py
       - run: python3 scripts/check-release.py
         env:

@@ -2,9 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Hallmark · genre: modern-minimal · theme: Cobalt (app-adapted) · macrostructure: readout band + panels
- * design-system: design.md · designed-as-app · tone: technical instrument panel
- * anchor hue: cobalt oklch(55% .20 258) · paper: cool near-white / graphite dark */
+/* Quantized Line Field · original radio-wave study, warm paper, electric blue.
+ * The drawing is decorative; live measurements retain their own accessible readouts. */
 
 /* Self-hosted Latin subsets only — the dashboard is served offline from the device. */
 @font-face {
@@ -24,14 +23,14 @@
 
 /* Colours are OKLCH (see design.md) stored as sRGB channels for Tailwind's <alpha-value>. */
 :root {
-  --bg: 243 245 248;
-  --surface: 252 253 254;
-  --surface-2: 236 239 243;
-  --line: 25 32 41;
-  --text: 25 32 41;
-  --text-2: 71 78 87;
-  --text-3: 100 105 113;
-  --accent: 7 107 227;
+  --bg: 250 250 248;
+  --surface: 250 250 248;
+  --surface-2: 238 238 235;
+  --line: 32 34 32;
+  --text: 32 34 32;
+  --text-2: 75 80 75;
+  --text-3: 100 104 98;
+  --accent: 33 82 231;
   --ok: 10 126 58;
   --warn: 169 90 0;
   --danger: 201 47 51;
@@ -39,7 +38,7 @@
   --on-accent: 252 253 254;
   --scrim: 11 14 20;
   /* Graphite readout band — the page's one dark beat in light mode */
-  --band: 22 27 34;
+  --band: 17 18 18;
   --band-ink: 236 239 242;
   --band-ink-2: 165 171 180;
   --band-line: 236 239 242;
@@ -48,21 +47,21 @@
 }
 
 [data-theme='dark'] {
-  --bg: 11 14 20;
-  --surface: 18 22 28;
-  --surface-2: 28 33 40;
-  --line: 227 232 239;
-  --text: 232 235 241;
-  --text-2: 172 178 186;
-  --text-3: 135 141 149;
-  --accent: 86 159 255;
+  --bg: 17 18 18;
+  --surface: 25 26 25;
+  --surface-2: 37 39 37;
+  --line: 243 243 237;
+  --text: 243 243 237;
+  --text-2: 190 193 185;
+  --text-3: 155 159 151;
+  --accent: 145 191 255;
   --ok: 93 200 121;
   --warn: 245 174 75;
   --danger: 242 113 106;
   --nr: 187 138 239;
-  --on-accent: 11 14 20;
+  --on-accent: 17 18 18;
   --scrim: 0 0 0;
-  --band: 27 34 45;
+  --band: 32 34 32;
   --band-ink: 236 239 242;
   --band-ink-2: 172 178 186;
   --band-line: 236 239 242;
@@ -117,7 +116,7 @@ body {
     --line: var(--band-line);
     --text: var(--band-ink);
     --text-2: var(--band-ink-2);
-    --text-3: 135 141 149;
+    --text-3: 155 159 151;
     --accent: var(--band-accent);
     --ok: 93 200 121;
     --warn: 245 174 75;
@@ -196,4 +195,52 @@ button {
 }
 .no-scrollbar {
   scrollbar-width: none;
+}
+
+/* Shared flat-plate system: solid edges, never blur or broad shadows. */
+.rounded-panel { border-radius: 17px; }
+.field-card { position: relative; isolation: isolate; margin-bottom: 5px; transition: transform 180ms ease; }
+.field-card::after { content: ''; position: absolute; z-index: -1; inset: 0; border: 1px solid rgb(var(--line) / .16); border-radius: inherit; background: rgb(var(--surface-2)); transform: translateY(4px); pointer-events: none; }
+.field-card > header { position: relative; min-height: 43px; }
+.field-card > header::before { content: ''; width: 3px; height: 12px; background: rgb(var(--accent)); margin-right: 1px; flex: none; }
+.field-card > header h2 { flex: 1; }
+.field-card > div { background: rgb(var(--surface)); border-radius: 0 0 16px 16px; }
+.field-card:not(:has(> header)) > div { border-radius: 16px; }
+.field-sidebar { background: rgb(var(--surface-2)); }
+.field-brand { margin: 0 16px 24px; padding: 27px 4px 24px; border-bottom: 1px solid rgb(var(--line) / .16); }
+.field-brand-edition { display: block; margin-top: 3px; font: 11px/1.4 ui-monospace, monospace; letter-spacing: .12em; color: rgb(var(--text-3)); }
+.field-nav-item { position: relative; border: 1px solid transparent; min-height: 42px; }
+.field-nav-item.field-nav-active { border-color: rgb(var(--line) / .12); background: rgb(var(--surface)); }
+.field-nav-active::after { content: ''; margin-left: auto; width: 5px; height: 16px; background: rgb(var(--accent)); }
+.field-page > div > div > h1, .field-page > div > header > h1 { font-family: Georgia, 'Times New Roman', 'Songti SC', SimSun, serif; font-size: 30px; font-weight: 500; }
+.overview-intro { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, .88fr); gap: 24px; align-items: stretch; padding-bottom: 7px; }
+.overview-copy { min-width: 0; padding: 11px 0 0; display: flex; flex-direction: column; }
+.overview-title { margin: 24px 0 17px; font-family: Georgia, 'Times New Roman', 'Songti SC', SimSun, serif; font-size: clamp(32px, 4vw, 49px); line-height: 1.1; font-weight: 500; letter-spacing: -.055em; }
+.overview-title > span { display: block; margin-top: 7px; color: rgb(var(--text-3)); }
+.overview-divider { display: inline-block; height: 10px; margin: 0 9px; border-left: 1px solid rgb(var(--line) / .3); }
+.overview-index { display: flex; justify-content: space-between; gap: 15px; margin-top: auto; padding-top: 24px; padding-bottom: 4px; color: rgb(var(--text-3)); font: 11px/1.4 ui-monospace, monospace; letter-spacing: .08em; }
+.line-field-study { position: relative; min-width: 0; min-height: 244px; border-radius: 17px; background: #2152e7; color: #c2dcff; border: 1px solid rgb(32 34 32 / .12); overflow: hidden; }
+.line-field-canvas { display: block; width: 100%; height: 214px; color: #c2dcff; }
+.line-field-caption { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 35px; padding: 0 16px 8px; font: 11px/1.4 ui-monospace, monospace; letter-spacing: .075em; color: #e3edff; }
+.line-field-caption button { display: inline-flex; align-items: center; gap: 8px; min-height: 27px; padding: 0 1px; color: inherit; font: inherit; background: none; border: 0; cursor: pointer; }
+.line-field-caption button:disabled { opacity: .7; cursor: default; }
+.line-field-caption button:focus-visible { outline-color: #fafaf8; }
+.line-field-cross { position: absolute; width: 12px; height: 12px; pointer-events: none; }
+.line-field-cross::before, .line-field-cross::after { content: ''; position: absolute; background: #c2dcff; }
+.line-field-cross::before { left: 5px; top: 0; height: 12px; width: 1px; }
+.line-field-cross::after { left: 0; top: 5px; height: 1px; width: 12px; }
+.line-field-cross-first { left: 16px; top: 16px; }
+.line-field-cross-last { right: 16px; bottom: 49px; }
+.readout-band { position: relative; border-color: rgb(var(--line) / .16); }
+[data-theme='dark'] .line-field-study { background: #202220; border-color: rgb(194 220 255 / .24); }
+[data-theme='dark'] .line-field-canvas { color: #91bfff; }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) { .field-card:hover { transform: translateY(-1px); } }
+@media (pointer: coarse) { .line-field-caption button { min-height: 44px; min-width: 44px; } }
+@media (max-width: 650px) {
+  .overview-intro { grid-template-columns: minmax(0, 1fr); gap: 13px; }
+  .overview-title { margin-top: 17px; font-size: 32px; }
+  .overview-title > span { display: inline; margin-left: 8px; font-size: 26px; }
+  .overview-index { padding-top: 17px; }
+  .line-field-study { min-height: 183px; }
+  .line-field-canvas { height: 155px; }
 }

@@ -18,7 +18,9 @@ test('a rejected trusted-source check falls back to Chinese password login', asy
 test('a successful trusted-source check opens the dashboard without a password', async ({ page, agent }) => {
   agent.on('POST', '/cgi-bin/wg-login', { data: { token: 'synthetic-trusted-token' } })
   await openApp(page)
-  await expect(page.getByRole('heading', { name: '概览', exact: true })).toBeVisible()
+  // Successful auth must unlock the actual dashboard data, independent of editorial heading copy.
+  await expect(page.getByTestId('home-rsrp')).toBeVisible()
+  expect(agent.requests({ method: 'GET', path: '/api/dashboard' })[0].headers.authorization).toBe('Bearer synthetic-trusted-token')
   await expect(page.getByLabel('管理密码')).toHaveCount(0)
   expect(agent.requests({ method: 'POST', path: '/cgi-bin/wg-login' })[0].body).toEqual({})
   expect(agent.requests({ method: 'POST', path: '/api/auth/login' })).toHaveLength(0)

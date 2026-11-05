@@ -49,13 +49,13 @@ export default function Shell({
     theme === 'dark' ? <ISun size={17} /> : <IMoon size={17} />
 
   return (
-    <div className="flex h-full bg-bg">
+    <div className="field-shell flex h-full bg-bg">
       {/* Desktop sidebar */}
-      <aside className="hidden w-56 shrink-0 flex-col border-r border-line/8 bg-surface lg:flex">
-        <div className="flex items-center gap-2.5 px-5 pb-5 pt-6">
+      <aside className="field-sidebar hidden w-56 shrink-0 flex-col border-r border-line/8 bg-surface lg:flex">
+        <div className="field-brand flex items-center gap-2.5 px-5 pb-5 pt-6">
           <Mark size={22} className="shrink-0 text-ink" />
           <div className="min-w-0">
-            <p className="truncate font-display text-sm font-semibold tracking-[-0.01em] text-ink">U60 Pro</p>
+            <p className="truncate font-display text-sm font-semibold tracking-[-0.01em] text-ink">U60 Pro<span className="field-brand-edition">CONTROL STUDIO</span></p>
             <p className="tnum truncate font-mono text-caption text-ink3">{window.location.hostname}</p>
           </div>
         </div>
@@ -65,9 +65,9 @@ export default function Shell({
             <button
               key={item.id}
               onClick={() => onNavigate(item.id)}
-              className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-ctl px-3 py-2 text-body font-semibold transition-colors coarse:min-h-11 ${
+              className={`field-nav-item flex w-full items-center gap-2.5 whitespace-nowrap rounded-ctl px-3 py-2 text-body font-semibold transition-colors coarse:min-h-11 ${
                 group === item.id
-                  ? 'bg-surface2 text-ink [&>svg]:text-accent'
+                  ? 'field-nav-active bg-surface2 text-ink [&>svg]:text-accent'
                   : 'text-ink2 hover:bg-surface2 hover:text-ink'
               }`}
               aria-current={group === item.id ? 'page' : undefined}
@@ -107,7 +107,7 @@ export default function Shell({
         </header>
 
         <main tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-shell px-4 pb-24 pt-4 lg:px-6 lg:pb-10 lg:pt-6">
+          <div className="field-page mx-auto w-full max-w-shell px-4 pb-24 pt-4 lg:px-6 lg:pb-10 lg:pt-6">
             <AlertBanner />
             <Suspense
               fallback={

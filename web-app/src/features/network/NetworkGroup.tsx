@@ -4,8 +4,9 @@ import ClientsTab from './ClientsTab'
 import WifiTab from './WifiTab'
 import RouterTab from './RouterTab'
 import WireGuardTab from './WireGuardTab'
+import TailscaleTab from './TailscaleTab'
 
-type Tab = 'clients' | 'wifi' | 'router' | 'wireguard'
+type Tab = 'clients' | 'wifi' | 'router' | 'wireguard' | 'tailscale'
 
 export default function NetworkGroup() {
   const [tab, setTab] = useState<Tab>('clients')
@@ -23,11 +24,13 @@ export default function NetworkGroup() {
           { id: 'wifi', label: "Wi-Fi" },
           { id: 'router', label: "路由设置" },
           { id: 'wireguard', label: "WireGuard" },
+          { id: 'tailscale', label: "Tailscale" },
         ]}
         active={tab}
         onChange={setTab}
         label="网络分类"
         idBase="network"
+        wrap
       />
 
       <TabPanel idBase="network" id={tab} className="space-y-4">
@@ -35,6 +38,7 @@ export default function NetworkGroup() {
         {tab === 'wifi' && <WifiTab />}
         {tab === 'router' && <RouterTab />}
         {tab === 'wireguard' && <WireGuardTab />}
+        {tab === 'tailscale' && <TailscaleTab />}
       </TabPanel>
     </div>
   )

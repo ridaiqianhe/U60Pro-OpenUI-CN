@@ -17,7 +17,7 @@ export function Card({
   pad?: boolean
 }) {
   return (
-    <section className={`rounded-panel border border-line/8 bg-surface ${className}`}>
+    <section className={`field-card rounded-panel border border-line/8 bg-surface ${className}`}>
       {title != null && (
         <header className="flex items-center justify-between gap-2 border-b border-line/8 px-4 py-2.5">
           <h2 className="font-display text-sm font-semibold tracking-[-0.01em] text-ink">{title}</h2>

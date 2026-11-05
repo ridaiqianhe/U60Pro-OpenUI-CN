@@ -397,7 +397,15 @@ test.describe('Metric help tooltip (U05)', () => {
       })
       .toBeLessThanOrEqual(VIEWPORTS.phone320.height)
     await inViewport(page, await tip.boundingBox())
+    // Wheel input applies to the element under the pointer, which otherwise remains
+    // at (0, 0) over the fixed header. Move onto the real scrolling main, outside
+    // the tooltip's >=8 px viewport margin, and verify an actual scroll occurred.
+    const main = page.getByRole('main')
+    const mainBox = (await main.boundingBox())!
+    const scrollBefore = await main.evaluate(el => el.scrollTop)
+    await page.mouse.move(mainBox.x + 4, mainBox.y + mainBox.height / 2)
     await page.mouse.wheel(0, 200)
+    await expect.poll(() => main.evaluate(el => el.scrollTop)).not.toBe(scrollBefore)
     await expect(tip).toHaveCount(0)
   })
 

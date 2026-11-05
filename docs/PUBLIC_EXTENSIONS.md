@@ -10,6 +10,7 @@
 | WireGuard API | `scripts/device/wireguard.cgi` | dashboard `cgi-bin/wireguard` |
 | 短信转发 API | `scripts/device/sms-forward.cgi` | dashboard `cgi-bin/sms-forward` |
 | WireGuard 服务 | `wireguard-service.sh`、`wireguard-parse.awk`、`wireguard-scope.sh` | `/data/plugins/wireguard/` 下命名为 `service.sh`、`parse.awk`、`scope.sh` |
+| Tailscale | `scripts/install-tailscale.py`、`scripts/device/tailscale/` | `/data/plugins/tailscale/`、面板 `cgi-bin/tailscale` |
 | 访客 Wi-Fi API | `scripts/device/guest-wifi.cgi`、`guest-wifi/main.lua` | `cgi-bin/guest-wifi`、`/data/plugins/guest-wifi/main.lua` |
 | 流量查询 API | `scripts/device/traffic-query.cgi`、`traffic-query/` | `cgi-bin/traffic-query`、`/data/plugins/traffic-query/` |
 | 短信转发服务 | `scripts/device/sms-forward/` | `/data/plugins/sms-forward/` |
@@ -122,3 +123,11 @@ GB 按原厂 1024³ 字节换算；不改月重置日。回读失败恢复之前
 通过指定代理组，保留订阅中的专用节点解析器。覆盖会合并 fake-ip 过滤及域名
 策略，并移除订阅 fallback/fallback-filter。删除标志后再次渲染恢复跟随订阅。
 MRS 数据及订阅由用户自行提供，仓库不包含私人节点或运行配置。
+
+
+## Tailscale
+
+网络页增加 Tailscale 标签，提供官方或 Headscale 控制服务器配置、网页登录授权、
+启停及开机连接；安装器只使用官方校验过的 ARM64 核心。默认不接管 DNS、
+不接收子网路由或使用出口节点，不开启 Tailscale SSH。
+详见 [安装、路由范围与恢复说明](TAILSCALE.zh-CN.md)。

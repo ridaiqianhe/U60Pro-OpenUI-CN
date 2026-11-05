@@ -1,0 +1,60 @@
+import { test, expect } from './support/harness'
+import { openApp, VIEWPORTS } from './support/app'
+const path = '/cgi-bin/tailscale'
+const status = { installed: true, running: false, autostart: false, version: '1.104.5', hostname: 'u60pro', control_url: '', backend_state: 'Stopped', online: false, addresses: [] as string[], peer_count: 0, dns_name: '', health: [] as string[] }
+test('missing core cannot be started', async ({ page, agent }) => {
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await expect(page.getByText('设备尚未安装 Tailscale 核心', { exact: false })).toBeVisible()
+  await expect(page.getByRole('button', { name: '启动连接', exact: true })).toBeDisabled()
+  expect(agent.mutations()).toEqual([])
+})
+test('start once and show authorization only from the expected server', async ({ page, agent }) => {
+  agent.on('GET', path, { data: status })
+  agent.on('POST', path, { data: { ...status, running: true, backend_state: 'NeedsLogin', login_url: 'https://login.tailscale.com/a/synthetic' } })
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await page.getByRole('button', { name: '启动连接', exact: true }).click()
+  await expect(page.getByRole('link', { name: '打开 Tailscale 授权页面 ↗' })).toHaveAttribute('href', 'https://login.tailscale.com/a/synthetic')
+  await expect(page.getByRole('button', { name: '启动连接', exact: true })).toBeDisabled()
+  expect(agent.mutations()).toHaveLength(1)
+  expect(agent.mutations()[0].body).toEqual({ action: 'start' })
+})
+test('Cancel leaves the Tailscale connection running', async ({ page, agent }) => {
+  agent.on('GET', path, { data: { ...status, running: true, backend_state: 'Running', online: true, addresses: ['100.101.102.103'] } })
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await page.getByRole('button', { name: '停止连接', exact: true }).click()
+  await expect(page.getByRole('dialog')).toContainText('连接会断开')
+  await page.getByRole('dialog').getByRole('button', { name: '取消' }).click()
+  expect(agent.mutations()).toEqual([])
+})
+test('connection settings validate drafts before saving', async ({ page, agent }) => {
+  agent.on('GET', path, { data: status });agent.on('POST', path, { data: status })
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await page.getByRole('button', { name: '编辑连接配置' }).click()
+  await page.getByLabel('Tailscale 设备名称', { exact: true }).fill('u60-office')
+  await page.getByLabel('控制服务器（留空使用 Tailscale 官方）').fill('http://headscale.example.com')
+  await expect(page.getByRole('button', { name: '保存连接配置' })).toBeDisabled()
+  expect(agent.mutations()).toEqual([])
+  await page.getByLabel('控制服务器（留空使用 Tailscale 官方）').fill('https://headscale.example.com')
+  await page.getByRole('button', { name: '保存连接配置' }).click()
+  expect(agent.mutations()).toHaveLength(1)
+  expect(agent.mutations()[0].body).toEqual({ action: 'save', hostname: 'u60-office', control_url: 'https://headscale.example.com' })
+})
+test('autostart does not send credentials or start the service', async ({ page, agent }) => {
+  agent.on('GET', path, { data: status });agent.on('POST', path, { data: { ...status, autostart: true } })
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await page.getByRole('switch', { name: 'Tailscale 开机自动连接' }).click()
+  expect(agent.mutations()).toHaveLength(1)
+  expect(agent.mutations()[0].body).toEqual({ action: 'autostart', enabled: true })
+})
+test('untrusted login URL is never a link', async ({ page, agent }) => {
+  agent.on('GET', path, { data: { ...status, running: true, backend_state: 'NeedsLogin', login_url: 'https://login.tailscale.com.attacker.example/a/key' } })
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await expect(page.getByRole('link', { name: '打开 Tailscale 授权页面 ↗' })).toHaveCount(0)
+})
+test('Tailscale fits a 320px phone', async ({ page, agent }) => {
+  agent.on('GET', path, { data: { ...status, running: true, backend_state: 'Running', online: true, addresses: ['100.101.102.103', 'fd7a:115c:a1e0::1234'] } })
+  await page.setViewportSize(VIEWPORTS.phone320)
+  await openApp(page, { group: 'network', tab: 'Tailscale' })
+  await expect(page.getByRole('heading', { name: 'Tailscale', exact: true })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true)
+})
