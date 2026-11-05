@@ -135,7 +135,9 @@ fn is_lan_origin(origin: &str) -> bool {
     if octets.len() != 4 {
         return false;
     }
+    // Tailscale node IPv4 addresses use the shared-address range, not RFC1918.
     octets[0] == 10
+        || (octets[0] == 100 && (64..=127).contains(&octets[1]))
         || (octets[0] == 172 && octets[1] >= 16 && octets[1] <= 31)
         || (octets[0] == 192 && octets[1] == 168)
 }
@@ -625,7 +627,27 @@ fn respond(request: Request, status: u16, body: Value, origin: Option<&str>) {
 
 #[cfg(test)]
 mod tests {
-    use super::is_at_command_allowed;
+    use super::{is_at_command_allowed, is_lan_origin};
+
+    #[test]
+    fn tailscale_origins_are_allowed_without_allowing_other_public_addresses() {
+        for origin in [
+            "http://100.64.0.1:8080",
+            "http://100.88.88.13:8080",
+            "http://100.127.255.254:8080",
+        ] {
+            assert!(is_lan_origin(origin), "{origin}");
+        }
+        for origin in [
+            "http://100.63.255.255:8080",
+            "http://100.128.0.1:8080",
+            "http://100.88.88.13.evil.example:8080",
+            "http://100.88.88.13@evil.example:8080",
+        ] {
+            assert!(!is_lan_origin(origin), "{origin}");
+        }
+        assert!(is_lan_origin("http://192.168.0.1:8080"));
+    }
 
     #[test]
     fn at_allowlist_is_exact_and_read_only() {

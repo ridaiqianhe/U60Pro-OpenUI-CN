@@ -22,6 +22,11 @@ access() {
   rm -f "$base/access.address"
  fi
 }
+watch() {
+ if [ -f "$base/watch.sh" ]; then
+  nohup sh "$base/watch.sh" run >/dev/null 2>&1 </dev/null &
+ fi
+}
 stop() {
  access -D 2>/dev/null || true
  ip link del "$iface" 2>/dev/null || true
@@ -72,7 +77,7 @@ resolve_endpoints() {
 start() {
  [ -f "$base/profile.conf" ] || { echo '请先导入配置'; return 1; }
  if [ "$(sh "$base/scope.sh" "$base/profile.conf")" = full ] && ip link show mihomo0 >/dev/null 2>&1; then echo '全局 WireGuard 隧道需先关闭 Clash 透明代理'; return 1; fi
- if ip link show "$iface" >/dev/null 2>&1; then return 0; fi
+ if ip link show "$iface" >/dev/null 2>&1; then watch; return 0; fi
  work=$(mktemp -d "$base/.start.XXXXXX")
  trap 'code=$?; rm -rf "$work"; if [ "$code" != 0 ]; then stop; fi' EXIT
  awk -v wg="$work/wg.conf" -v addresses="$work/addresses" -v routes="$work/routes" -v mtu="$work/mtu" -f "$base/parse.awk" "$base/profile.conf"
@@ -99,6 +104,7 @@ start() {
  access -I
  iptables -t nat -I POSTROUTING 1 -o "$iface" -j MASQUERADE
  if grep -q : "$work/routes"; then ip6tables -t nat -I POSTROUTING 1 -o "$iface" -j MASQUERADE; fi
+ watch
 }
 case "${1:-}" in
  start) start ;;

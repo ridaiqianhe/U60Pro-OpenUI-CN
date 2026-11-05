@@ -40,7 +40,8 @@ python3 scripts/install-tailscale.py \
 2. 出现授权按钮后，在浏览器登录你自己的账号，确认加入目标 Tailnet。
 3. 返回面板点击“完成授权后刷新”。若 Tailnet 要求设备审批，先在管理端批准。
 4. 获得节点 IPv4 后，在同一 Tailnet 使用 `http://节点IPv4:8080/` 访问 OpenUI，
-   或 `ssh -p 2222 root@节点IPv4` 使用原有 SSH。两者仍使用原有认证。
+   或 `ssh -p 2222 root@节点IPv4` 使用原有 SSH。两者仍使用原有认证。前端跨域请求允许 Tailscale 的 `100.64.0.0/10`
+   地址段；需要同步部署本仓库 agent，旧 agent 会导致浏览器报 Failed to reach the agent。
 5. 需要重启后自动加入时，开启“开机自动连接”。
 
 首次授权可能需要再次点击启动，或停止后重新启动以获取过期后的授权链接。

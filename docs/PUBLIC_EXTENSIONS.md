@@ -9,7 +9,7 @@
 | Mihomo 扩展 | `scripts/device/mihomo-*.cgi` | dashboard 对应 `cgi-bin/` 名称（去掉 `.cgi`） |
 | WireGuard API | `scripts/device/wireguard.cgi` | dashboard `cgi-bin/wireguard` |
 | 短信转发 API | `scripts/device/sms-forward.cgi` | dashboard `cgi-bin/sms-forward` |
-| WireGuard 服务 | `wireguard-service.sh`、`wireguard-parse.awk`、`wireguard-scope.sh` | `/data/plugins/wireguard/` 下命名为 `service.sh`、`parse.awk`、`scope.sh` |
+| WireGuard 服务 | `wireguard-service.sh`、`wireguard-parse.awk`、`wireguard-scope.sh`、`wireguard-watch.sh` | `/data/plugins/wireguard/` 下命名为 `service.sh`、`parse.awk`、`scope.sh`、`watch.sh` |
 | Tailscale | `scripts/install-tailscale.py`、`scripts/device/tailscale/` | `/data/plugins/tailscale/`、面板 `cgi-bin/tailscale` |
 | 访客 Wi-Fi API | `scripts/device/guest-wifi.cgi`、`guest-wifi/main.lua` | `cgi-bin/guest-wifi`、`/data/plugins/guest-wifi/main.lua` |
 | 流量查询 API | `scripts/device/traffic-query.cgi`、`traffic-query/` | `cgi-bin/traffic-query`、`/data/plugins/traffic-query/` |
@@ -131,3 +131,12 @@ MRS 数据及订阅由用户自行提供，仓库不包含私人节点或运行�
 启停及开机连接；安装器只使用官方校验过的 ARM64 核心。默认不接管 DNS、
 不接收子网路由或使用出口节点，不开启 Tailscale SSH。
 详见 [安装、路由范围与恢复说明](TAILSCALE.zh-CN.md)。
+
+### WireGuard DDNS 自动恢复
+
+将 `scripts/device/wireguard-watch.sh` 部署为 `/data/plugins/wireguard/watch.sh`，
+并同时更新 `service.sh`。服务启动时会确保只有一个后台检查器；手动停止隧道后检查器退出，
+开机自启沿用现有 rc.local 中的 WireGuard `boot` 入口，不添加其他启动钩子。
+每 60 秒检查一次；握手超过 180 秒未成功（或尚无握手），才通过 WAN 查询端点域名。
+DNS 返回有效且不同的 IPv4 时仅更新对应 peer 的 Endpoint，不重建接口或改写配置/密钥。
+DNS 失败或返回 Clash Fake-IP 时保留原地址。数字 IP 和 IPv6 字面量不做 DNS 恢复。
