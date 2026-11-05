@@ -22,7 +22,10 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'mobile-webkit', testMatch: 'mobile-overflow.spec.ts', use: { ...devices['iPhone 13'] } },
+  ],
   webServer: {
     // Dev server only (no build). reuseExistingServer is off so a stale server on
     // this port, possibly pointing at someone else's tree, fails loudly.

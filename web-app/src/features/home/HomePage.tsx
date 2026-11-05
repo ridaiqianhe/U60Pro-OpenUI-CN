@@ -72,7 +72,7 @@ export default function HomePage({ onOpenClash }: { onOpenClash: () => void }) {
 
       {/* Readout band — the page's one graphite beat. Hairline grid via gap-px on a line-tinted ground. */}
       <section className="band readout-band overflow-hidden rounded-panel border border-line/10" aria-label="实时状态">
-        <div className="grid grid-cols-6 gap-px bg-line/10 sm:grid-cols-8 xl:grid-cols-6">
+        <div className="grid grid-cols-6 gap-px bg-line/10 [&>div]:min-w-0 sm:grid-cols-8 xl:grid-cols-6">
           <div className="col-span-6 bg-band p-4 sm:col-span-8 xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
@@ -127,7 +127,7 @@ export default function HomePage({ onOpenClash }: { onOpenClash: () => void }) {
 
           <div className="col-span-6 bg-band p-4 sm:col-span-2 xl:col-span-1">
             <p className="label">Traffic</p>
-            <div className="tnum mt-2 flex gap-x-6 font-mono font-medium text-ink sm:block sm:space-y-1.5">
+            <div className="tnum mt-2 flex flex-wrap gap-x-6 gap-y-3 font-mono font-medium text-ink sm:block sm:space-y-1.5">
               <p className="flex items-center gap-1.5 text-sm leading-none">
                 <IDownload size={14} className="shrink-0 text-ok" />
                 <span className="truncate" data-testid="home-download">DL {speed ? formatSpeed(speed.rx_bps) : '\u2014'}</span>

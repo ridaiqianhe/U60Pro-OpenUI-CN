@@ -18,7 +18,7 @@ file; change the system here first, never per screen. Tokens live in
 ## Macrostructure (app pages)
 - **Readout band + panels.** Home opens with one graphite *readout band* (the page's single dark beat in light mode): large mono readouts separated by hairlines. Everything else is hairline-bordered panels on warm paper with crisp plate edges.
 - Group pages: title (desktop only — the phone header already names the group), one-line subtitle, underline tabs, then panels.
-- Tables collapse to stacked rows below `sm`. Nothing scrolls sideways on a phone.
+- Tables collapse to stacked rows below `sm`. Nothing scrolls sideways on a phone. The main scroll container is vertical-only; grid/card children may shrink, and live rate pairs wrap as a unit rather than clip when values grow.
 
 ## Colour
 Colours are stored as sRGB channels for Tailwind's `<alpha-value>`.

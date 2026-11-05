@@ -42,7 +42,7 @@ jobs:
           RELEASE_SOURCE_REF: ${{ inputs.source_ref || github.ref }}
       - run: npm ci && npm run build && npm run lint && npm test
         working-directory: web-app
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
         working-directory: web-app
       - run: npm run test:browser
         working-directory: web-app

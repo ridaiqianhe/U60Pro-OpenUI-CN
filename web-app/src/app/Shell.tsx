@@ -49,7 +49,7 @@ export default function Shell({
     theme === 'dark' ? <ISun size={17} /> : <IMoon size={17} />
 
   return (
-    <div className="field-shell flex h-full bg-bg">
+    <div className="field-shell flex h-full w-full min-w-0 bg-bg">
       {/* Desktop sidebar */}
       <aside className="field-sidebar hidden w-56 shrink-0 flex-col border-r border-line/8 bg-surface lg:flex">
         <div className="field-brand flex items-center gap-2.5 px-5 pb-5 pt-6">
@@ -106,7 +106,7 @@ export default function Shell({
           </button>
         </header>
 
-        <main tabIndex={-1} className="min-h-0 flex-1 overflow-y-auto">
+        <main tabIndex={-1} className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto">
           <div className="field-page mx-auto w-full max-w-shell px-4 pb-24 pt-4 lg:px-6 lg:pb-10 lg:pt-6">
             <AlertBanner />
             <Suspense
